@@ -56,7 +56,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     setIsCartLoading(true);
     try {
-      const response = await fetch(`http://localhost:5000/carts?userId=${user.id}`);
+      const response = await fetch(`api/data/carts?userId=${user.id}`);
       if (response.ok) {
         const userCart = await response.json();
         if (userCart.length > 0) {

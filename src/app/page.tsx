@@ -9,8 +9,8 @@ import Footer from "@/components/UI-UX/common/Footer";
 async function getData() {
   try {
     const [exclusiveRes, featuredRes] = await Promise.all([
-      fetch('http://localhost:5000/products?isExclusive=true'),
-      fetch('http://localhost:5000/products?isFeatured=true')
+      fetch('api/data/products?isExclusive=true'),
+      fetch('api/data/products?isFeatured=true')
     ]);
     
     return {

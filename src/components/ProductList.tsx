@@ -24,7 +24,7 @@ type Product = {
   isExclusive?: boolean;
 };
 
-const API_BASE_URL = 'http://localhost:5000/products'; 
+const API_BASE_URL = 'api/data/products'; 
 
 interface ProductListProps {
   products: Product[];

@@ -22,7 +22,7 @@ interface Filters {
 }
 
 const fetchProducts = async (): Promise<Product[]> => {
-  const API_URL = 'http://localhost:5000/products';
+  const API_URL = 'api/data/products';
   
   try {
     const response = await fetch(API_URL);

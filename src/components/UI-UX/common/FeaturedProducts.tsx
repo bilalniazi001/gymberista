@@ -18,7 +18,7 @@ interface ProductItem {
   isNewArrival?: boolean; 
 }
 
-const API_URL = 'http://localhost:5000/products?isFeatured=true';
+const API_URL = 'api/data/products?isFeatured=true';
 
 // --- FRAMER MOTION VARIANTS ---
 const containerVariants = {

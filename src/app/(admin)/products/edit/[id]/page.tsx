@@ -24,7 +24,7 @@ type Product = {
   isExclusive?: boolean;
 };
 
-const API_BASE_URL = 'http://localhost:5000/products';
+const API_BASE_URL = 'api/data/products';
 
 async function getProduct(id: string): Promise<Product | null> {
   try {
