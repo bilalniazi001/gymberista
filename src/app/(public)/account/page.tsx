@@ -133,7 +133,6 @@ export default function AccountPage() {
                     Member Since
                   </label>
                   <p className="text-gray-800 font-semibold">
-                    {new Date(user.createdAt).toLocaleDateString()}
                   </p>
                 </div>
               </div>

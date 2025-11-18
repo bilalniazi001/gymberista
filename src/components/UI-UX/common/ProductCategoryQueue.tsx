@@ -28,7 +28,7 @@ export default function ProductCategoryQueue() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch('api/data/products');
+        const response = await fetch('http://localhost:5000/products');
         if (!response.ok) throw new Error('Failed to fetch products');
         const products = await response.json();
 

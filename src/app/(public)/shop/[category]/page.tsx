@@ -21,7 +21,7 @@ interface Product {
 async function getCategoryProducts(category: string): Promise<Product[]> {
   try {
     // ✅ JSON Server se saare products fetch karein
-    const res = await fetch('api/data/products', {
+    const res = await fetch('http://localhost:5000/products', {
       cache: 'no-store'
     });
     

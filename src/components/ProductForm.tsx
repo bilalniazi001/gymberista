@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 // API Configuration - JSON Server
-const API_BASE_URL = 'api/data'; 
+const API_BASE_URL = 'http://localhost:5000'; 
 
 // --- TYPE DEFINITIONS ---
 export interface Product { 
