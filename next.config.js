@@ -1,21 +1,22 @@
-import type { NextConfig } from 'next';
-
-const nextConfig: NextConfig = {
-  // Turbopack conflict aur json-server module not found ke hal ke liye
-  experimental: {
-     // swcMinify ko 'false' set karne se Webpack/SWC fallback ho jata hai.
-     // Yeh Turbopack ko bypass karta hai.
-     swcMinify: false, // <-- Sirf yeh ek line rakhen
-  },
-
-  // json-server aur next-connect ko external batane wala zaroori Webpack code
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  // Sirf Webpack function rakha hai, taake Turbopack ka masla kam ho
   webpack: (config, { isServer }) => {
+    // Yeh zaroori hai ke Vercel ke serverless environment mein packages milen
     if (isServer) {
-      // json-server aur next-connect ko Node.js ka hissa samjhein
+      // json-server aur next-connect ko external dependency bana diya
       config.externals.push('json-server', 'next-connect');
     }
     return config;
   },
+
+  // Agar aapko phir bhi Turbopack ka error aaye, toh neeche di gayi
+  // experimental block ko uncomment (hata dein //) aur dobara deploy karein
+  /*
+  experimental: {
+    forceSwcTransforms: true,
+  },
+  */
 };
 
-export default nextConfig;
+module.exports = nextConfig;
