@@ -13,7 +13,6 @@
     "json-server": "^1.0.0-beta.3",
     "lucide-react": "^0.545.0",
     "next": "^16.0.0",
-    "next-connect": "^1.0.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-icons": "^5.5.0"
@@ -24,6 +23,8 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "next-connect": "^1.0.0",    
+    "json-server": "^1.0.0-beta.3",
     "eslint": "^9",
     "eslint-config-next": "15.5.4",
     "tailwindcss": "^4",
