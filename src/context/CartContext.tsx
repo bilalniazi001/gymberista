@@ -56,7 +56,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     setIsCartLoading(true);
     try {
-      const response = await fetch(`http://localhost:5000/carts?userId=${user.id}`);
+      const response = await fetch(`http://localhost:5000/cart?userId=${user.id}`);
       if (response.ok) {
         const userCart = await response.json();
         if (userCart.length > 0) {
@@ -75,12 +75,12 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     try {
       // First, check if user already has a cart
-      const existingCartResponse = await fetch(`http://localhost:5000/carts?userId=${user.id}`);
+      const existingCartResponse = await fetch(`http://localhost:5000/cart?userId=${user.id}`);
       const existingCart = await existingCartResponse.json();
 
       if (existingCart.length > 0) {
         // Update existing cart
-        await fetch(`http://localhost:5000/carts/${existingCart[0].id}`, {
+        await fetch(`http://localhost:5000/cart/${existingCart[0].id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -91,7 +91,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
       } else {
         // Create new cart
-        await fetch('http://localhost:5000/carts', {
+        await fetch('http://localhost:5000/cart', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
