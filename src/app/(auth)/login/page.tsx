@@ -14,31 +14,36 @@ export default function AdminLoginPage() {
   const [error, setError] = useState('');
   
   const { adminLogin, isAuthenticated, isAdmin, loading: authLoading } = useAuth();
-  // ✅ REMOVED: isManager from destructuring
   const router = useRouter();
 
-  // ✅ UPDATED: Redirect if already authenticated as admin only
+  // Redirect if already authenticated as admin only
   useEffect(() => {
     if (!authLoading && isAuthenticated && isAdmin) {
+      console.log('✅ Already authenticated as admin, redirecting...');
       router.push('/dashboard');
     }
   }, [authLoading, isAuthenticated, isAdmin, router]);
-  // ✅ REMOVED: isManager from dependencies
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
+    console.log('🔄 Starting admin login process...');
+
     try {
       const success = await adminLogin(email, password);
+      console.log('📊 Login result:', success);
+      
       if (success) {
+        console.log('✅ Login successful, redirecting...');
         router.push('/dashboard');
       } else {
-        setError('Invalid admin credentials or access denied');
+        setError('Invalid admin credentials or access denied. Please check email and password.');
       }
-    } catch (err) {
-      setError('An error occurred during login');
+    } catch (err: any) {
+      console.error('🚨 Login error:', err);
+      setError('An error occurred during login. Please try again.');
     } finally {
       setLoading(false);
     }

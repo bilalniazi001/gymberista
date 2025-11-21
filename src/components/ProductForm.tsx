@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-// API Configuration - JSON Server
+// ✅ UPDATED: NestJS Backend URL
 const API_BASE_URL = 'http://localhost:5000'; 
 
 // --- TYPE DEFINITIONS ---
@@ -56,6 +56,7 @@ export default function ProductForm({ initialData }: ProductFormProps) {
     console.log('   - Mode:', isEditMode ? 'EDIT' : 'ADD');
     console.log('   - Initial Data:', initialData);
     console.log('   - Product ID:', initialData?.id);
+    console.log('   - Form Data:', formData);
   }, [isEditMode, initialData]);
 
   const [formData, setFormData] = useState<FormDataType>(() => {
@@ -108,8 +109,8 @@ export default function ProductForm({ initialData }: ProductFormProps) {
             isInStock: formData.quantityInStock > 0, 
         };
         
-        // ✅ JSON Server compatible - PATCH for edit, POST for create
-        const method = isEditMode ? 'PATCH' : 'POST';
+        // ✅ UPDATED: NestJS backend compatible - PUT for edit, POST for create
+        const method = isEditMode ? 'PUT' : 'POST';
         const url = isEditMode ? `${API_BASE_URL}/products/${initialData!.id}` : `${API_BASE_URL}/products`;
 
         console.log('🔄 Submitting form:', {
@@ -136,7 +137,7 @@ export default function ProductForm({ initialData }: ProductFormProps) {
 
         alert(`Product successfully ${isEditMode ? 'updated' : 'created'}!`);
         
-        // ✅ Redirect to products list
+        // ✅ Redirect to admin products list
         router.push('/products');
         router.refresh();
 
@@ -192,7 +193,7 @@ export default function ProductForm({ initialData }: ProductFormProps) {
               onChange={handleChange} 
               required 
               className="mt-1 block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out placeholder-gray-400 text-gray-800" 
-              placeholder="e.g., Wireless Bluetooth Headphones"
+              placeholder="e.g., Whey Protein"
             />
           </div>
           
@@ -473,7 +474,7 @@ export default function ProductForm({ initialData }: ProductFormProps) {
           <button
             type="button"
             onClick={() => router.push('/products')}
-            className="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-gray-500 focus:ring-opacity-50"
+            className="flex-1 bg-[#2D3B29] text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-gray-500 focus:ring-opacity-50"
           >
             Cancel
           </button>
@@ -482,7 +483,7 @@ export default function ProductForm({ initialData }: ProductFormProps) {
             type="submit"
             disabled={isLoading}
             className={`flex-1 bg-gradient-to-r from-[#629D23] to-[#4c781d] text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-0.5 hover:scale-100 ${
-              isLoading ? 'opacity-60 cursor-not-allowed' : 'hover:from-green-700 hover:to-green-800'
+              isLoading ? 'opacity-60 cursor-not-allowed' : ''
             } focus:outline-none focus:ring-4 focus:ring-green-500 focus:ring-opacity-50`}
           >
             {isLoading ? (

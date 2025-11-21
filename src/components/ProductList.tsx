@@ -1,3 +1,5 @@
+// ProductList.tsx - Clean version without debug UI
+
 'use client'; 
 
 import Link from 'next/link';
@@ -14,7 +16,7 @@ type Product = {
   quantityInStock: number;
   size: string;
   rating: number;
-  color: string; // ✅ color field
+  color: string;
   onSale: boolean;
   discountPercentage: number;
   isNewArrival: boolean;
@@ -32,6 +34,10 @@ interface ProductListProps {
 
 export default function ProductList({ products }: ProductListProps) {
   const router = useRouter();
+
+  // ✅ Debugging - Products check karein (console mein hi, UI mein nahi)
+  console.log('📦 ProductList - Products received:', products);
+  console.log('🔍 ProductList - First product ID:', products[0]?.id);
 
   // ✅ Data validation add karein
   if (!products || !Array.isArray(products)) {
@@ -71,11 +77,25 @@ export default function ProductList({ products }: ProductListProps) {
     }
   };
 
+  // ✅ Edit button click handler with enhanced debugging
+  const handleEditClick = (product: Product) => {
+    console.log('🔄 Edit Button Clicked:');
+    console.log('   - Product ID:', product.id);
+    console.log('   - Product Name:', product.name);
+    console.log('   - Edit URL:', `/products/edit/${product.id}`);
+    
+    if (!product.id || product.id === 'undefined') {
+      console.error('❌ ERROR: Product ID is invalid for editing:', product.id);
+      alert('Cannot edit product: Invalid product ID');
+      return false; // Prevent navigation
+    }
+  };
+
   return (
     <div className="overflow-x-auto bg-white rounded-xl shadow-xl p-6 border border-gray-100">
       <h2 className="text-3xl font-bold text-[#2D3B29] mb-6 border-b pb-3">Product List</h2>
       
-      {/* ✅ Products count show karein */}
+      {/* ✅ Products count show karein - simple version */}
       <div className="mb-4 text-sm text-gray-600">
         Total Products: {products.length}
       </div>
@@ -105,80 +125,97 @@ export default function ProductList({ products }: ProductListProps) {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {products.map((product) => (
-              <tr key={product.id} className="hover:bg-gray-50 transition duration-150">
-                <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                  <div className="flex items-center">
-                    {product.imageUrl && (
-                      <img 
-                        src={product.imageUrl} 
-                        alt={product.name}
-                        className="w-10 h-10 rounded-md object-cover mr-3"
-                      />
-                    )}
-                    <span>{product.name}</span>
-                  </div>
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-600 font-mono">
-                  ${product.price.toFixed(2)}
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-600">
-                  <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                    {product.category}
-                  </span>
-                </td>
-                
-                <td className="px-4 py-3 whitespace-nowrap text-sm font-bold text-center">
-                  <span className={`inline-flex px-3 py-1 text-xs leading-5 rounded-full ${
-                    product.quantityInStock > 50 ? 'bg-green-100 text-green-800' :
-                    product.quantityInStock > 0 ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-red-100 text-red-800'
-                  }`}>
-                    {product.quantityInStock} {product.quantityInStock === 1 ? 'unit' : 'units'}
-                  </span>
-                </td>
-
-                <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-center">
-                  <span className={`inline-flex px-3 py-1 text-xs leading-5 font-bold rounded-full ${
-                    product.onSale ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {product.onSale ? 'ON SALE' : 'REGULAR'}
-                  </span>
-                </td>
-                
-                <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-center">
-                  {product.discountPercentage > 0 ? (
-                    <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-bold">
-                      -{product.discountPercentage}%
+            {products.map((product) => {
+              // ✅ Check karein ke product ID valid hai
+              const isValidProduct = product.id && product.id !== 'undefined';
+              
+              return (
+                <tr key={product.id} className="hover:bg-gray-50 transition duration-150">
+                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <div className="flex items-center">
+                      {product.imageUrl && (
+                        <img 
+                          src={product.imageUrl} 
+                          alt={product.name}
+                          className="w-10 h-10 rounded-md object-cover mr-3"
+                        />
+                      )}
+                      <span>{product.name}</span>
+                      {!isValidProduct && (
+                        <span className="ml-2 text-xs text-red-500 bg-red-100 px-2 py-1 rounded">
+                          No ID
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-600 font-mono">
+                    ${product.price.toFixed(2)}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-600">
+                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                      {product.category}
                     </span>
-                  ) : (
-                    <span className="text-gray-400">—</span>
-                  )}
-                </td>
+                  </td>
+                  
+                  <td className="px-4 py-3 whitespace-nowrap text-sm font-bold text-center">
+                    <span className={`inline-flex px-3 py-1 text-xs leading-5 rounded-full ${
+                      product.quantityInStock > 50 ? 'bg-green-100 text-green-800' :
+                      product.quantityInStock > 0 ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-red-100 text-red-800'
+                    }`}>
+                      {product.quantityInStock} {product.quantityInStock === 1 ? 'unit' : 'units'}
+                    </span>
+                  </td>
 
-                <td className="px-4 py-3 whitespace-nowrap text-gray-800 text-sm font-medium text-center">
-                  <div className="flex items-center justify-center">
-                    <span className="text-yellow-500 mr-1">★</span>
-                    <span>{product.rating ? product.rating.toFixed(1) : '0.0'}</span>
-                  </div>
-                </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-center">
+                    <span className={`inline-flex px-3 py-1 text-xs leading-5 font-bold rounded-full ${
+                      product.onSale ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {product.onSale ? 'ON SALE' : 'REGULAR'}
+                    </span>
+                  </td>
+                  
+                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-center">
+                    {product.discountPercentage > 0 ? (
+                      <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-bold">
+                        -{product.discountPercentage}%
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">—</span>
+                    )}
+                  </td>
 
-                <td className="px-6 py-3 whitespace-nowrap text-center text-sm space-x-3">
-  <Link 
-    href={`/products/edit/${product.id}`}  // ✅ YEH CHANGE KAREIN
-    className="text-indigo-600 hover:text-indigo-800 font-semibold transition duration-150 px-4 py-2 border border-indigo-600 rounded hover:bg-indigo-50"
-  >
-    Edit
-  </Link>
-  <button
-    onClick={() => handleDelete(product.id, product.name)}
-    className="text-red-600 hover:text-red-800 font-semibold transition duration-150 px-3 py-2 border border-red-600 rounded hover:bg-red-50"
-  >
-    Delete
-  </button>
-</td>
-              </tr>
-            ))}
+                  <td className="px-4 py-3 whitespace-nowrap text-gray-800 text-sm font-medium text-center">
+                    <div className="flex items-center justify-center">
+                      <span className="text-yellow-500 mr-1">★</span>
+                      <span>{product.rating ? product.rating.toFixed(1) : '0.0'}</span>
+                    </div>
+                  </td>
+
+                  <td className="px-6 py-3 whitespace-nowrap text-center text-sm space-x-3">
+                    {isValidProduct ? (
+                      <>
+                        <Link 
+                          href={`/products/edit/${product.id}`}
+                          onClick={() => handleEditClick(product)}
+                          className="text-indigo-600 hover:text-indigo-800 font-semibold transition duration-150 px-4 py-2 border border-indigo-600 rounded hover:bg-indigo-50"
+                        >
+                          Edit
+                        </Link>
+                        <button
+                          onClick={() => handleDelete(product.id, product.name)}
+                          className="text-red-600 hover:text-red-800 font-semibold transition duration-150 px-3 py-2 border border-red-600 rounded hover:bg-red-50"
+                        >
+                          Delete
+                        </button>
+                      </>
+                    ) : (
+                      <span className="text-red-500 text-sm">Invalid ID</span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       )}

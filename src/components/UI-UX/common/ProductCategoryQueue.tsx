@@ -14,7 +14,7 @@ export default function ProductCategoryQueue() {
   const [categoriesData, setCategoriesData] = useState<CategoryItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // ✅ Categories ke liye background images
+  //  Categories ke liye background images
   const categoryImages = {
     'Protein': 'https://springs.com.pk/cdn/shop/files/705016500406.gif?v=1747852022',
     'Pre Workout': 'https://cloudinary.images-iherb.com/image/upload/f_auto,q_auto:eco/images/bsn/bsn00160/l/43.jpg',
@@ -32,7 +32,7 @@ export default function ProductCategoryQueue() {
         if (!response.ok) throw new Error('Failed to fetch products');
         const products = await response.json();
 
-        // ✅ Dynamic categories generate karein products se
+        //  Dynamic categories generate karein products se
         const categoryCounts = products.reduce((acc: any, product: any) => {
           const category = product.category;
           if (category) {
@@ -41,7 +41,7 @@ export default function ProductCategoryQueue() {
           return acc;
         }, {});
 
-        // ✅ Categories array banayein
+        //  Categories array banayein
         const categories = Object.keys(categoryCounts).map(category => ({
   id: category,
   name: category,

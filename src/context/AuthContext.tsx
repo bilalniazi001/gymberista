@@ -62,15 +62,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        const token = localStorage.getItem('token');
         const userData = localStorage.getItem('user_data');
         
-        if (userData) {
+        if (token && userData) {
           const parsedUser = JSON.parse(userData);
           setUser(parsedUser);
           setIsAuthenticated(true);
+          console.log('✅ User restored from storage:', parsedUser.email);
         }
       } catch (error) {
         console.error('Auth check failed:', error);
+        localStorage.removeItem('token');
         localStorage.removeItem('user_data');
       } finally {
         setLoading(false);
@@ -80,140 +83,122 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     checkAuth();
   }, []);
 
-  // ✅ Public Login (for normal users)
+  // ✅ Public Login (for normal users) - USING NESTJS BACKEND
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/users?email=${email}`);
-      
-      if (response.ok) {
-        const users = await response.json();
-        
-        if (users.length > 0) {
-          const userData = users[0];
-          
-          // ✅ Check password
-          if (userData.password === password) {
-            localStorage.setItem('user_data', JSON.stringify(userData));
-            setUser(userData);
-            setIsAuthenticated(true);
-            
-            console.log('Login successful:', userData);
-            return true;
-          } else {
-            console.log('Invalid password');
-            return false;
-          }
-        } else {
-          console.log('User not found');
-          return false;
-        }
-      }
-      return false;
-    } catch (error) {
-      console.error('Login failed:', error);
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
+      console.log('🔐 Attempting login for:', email);
 
-  // ✅ Admin Login (Only for admin role)
-  const adminLogin = async (email: string, password: string): Promise<boolean> => {
-    try {
-      setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/users?email=${email}`);
-      
-      if (response.ok) {
-        const users = await response.json();
-        
-        if (users.length > 0) {
-          const userData = users[0];
-          
-          // ✅ Check password and role
-          if (userData.password === password) {
-            // ✅ STRICT CHECK: Only admin can login
-            if (userData.role === 'admin') {
-              localStorage.setItem('user_data', JSON.stringify(userData));
-              setUser(userData);
-              setIsAuthenticated(true);
-              
-              console.log('Admin login successful:', userData);
-              return true;
-            } else {
-              console.log('Access denied: Admin privileges required');
-              return false;
-            }
-          } else {
-            console.log('Invalid admin credentials');
-            return false;
-          }
-        } else {
-          console.log('Admin user not found');
-          return false;
-        }
-      }
-      return false;
-    } catch (error) {
-      console.error('Admin login failed:', error);
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ✅ Signup Function - FIXED ROLE ISSUE
-  const signup = async (userData: SignupData): Promise<boolean> => {
-    try {
-      setLoading(true);
-
-      // ✅ Check if email already exists
-      const checkResponse = await fetch(`${API_BASE_URL}/users?email=${userData.email}`);
-      const existingUsers = await checkResponse.json();
-      
-      if (existingUsers.length > 0) {
-        alert('Email already exists. Please use a different email.');
-        return false;
-      }
-
-      // ✅ Create new user with proper role
-      const newUser = {
-        ...userData,
-        id: Date.now().toString(),
-        age: parseInt(userData.age),
-        role: 'user' as const, // ✅ Explicitly set role
-        createdAt: new Date().toISOString()
-      };
-
-      console.log('Creating user:', newUser);
-
-      const response = await fetch(`${API_BASE_URL}/users`, {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(newUser),
+        body: JSON.stringify({ email, password }),
       });
 
+      console.log('📡 Login response status:', response.status);
+
       if (response.ok) {
-        const createdUser = await response.json();
-        console.log('User created successfully:', createdUser);
+        const data = await response.json();
+        console.log('✅ Login successful:', data.user);
         
-        // ✅ Auto login after signup
-        const loginSuccess = await login(userData.email, userData.password);
-        if (loginSuccess) {
-          alert('Account created successfully! You are now logged in.');
-          return true;
-        } else {
-          alert('Account created but login failed. Please try logging in manually.');
-          return true;
-        }
+        // ✅ Store both token and user data
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user_data', JSON.stringify(data.user));
+        setUser(data.user);
+        setIsAuthenticated(true);
+        
+        return true;
       } else {
-        alert('Failed to create account. Please try again.');
+        const errorData = await response.json();
+        console.error('❌ Login failed:', errorData);
         return false;
       }
     } catch (error) {
-      console.error('Signup failed:', error);
+      console.error('🚨 Login network error:', error);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ Admin Login (Only for admin role) - USING NESTJS BACKEND
+  const adminLogin = async (email: string, password: string): Promise<boolean> => {
+    try {
+      setLoading(true);
+      console.log('👑 Attempting admin login for:', email);
+
+      const response = await fetch(`${API_BASE_URL}/auth/admin-login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      console.log('📡 Admin login response status:', response.status);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Admin login successful:', data.user);
+        
+        // ✅ Store both token and user data
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user_data', JSON.stringify(data.user));
+        setUser(data.user);
+        setIsAuthenticated(true);
+        
+        return true;
+      } else {
+        const errorData = await response.json();
+        console.error('❌ Admin login failed:', errorData);
+        return false;
+      }
+    } catch (error) {
+      console.error('🚨 Admin login network error:', error);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ Signup Function - USING NESTJS BACKEND
+  const signup = async (userData: SignupData): Promise<boolean> => {
+    try {
+      setLoading(true);
+      console.log('📝 Attempting signup for:', userData.email);
+
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      });
+
+      console.log('📡 Signup response status:', response.status);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Signup successful:', data.user);
+        
+        // ✅ Store both token and user data
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user_data', JSON.stringify(data.user));
+        setUser(data.user);
+        setIsAuthenticated(true);
+        
+        alert('Account created successfully! You are now logged in.');
+        return true;
+      } else {
+        const errorData = await response.json();
+        console.error('❌ Signup failed:', errorData);
+        alert(errorData.message || 'Failed to create account. Please try again.');
+        return false;
+      }
+    } catch (error) {
+      console.error('🚨 Signup network error:', error);
       alert('An error occurred during signup. Please try again.');
       return false;
     } finally {
@@ -221,11 +206,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // ✅ Create Admin User (for testing)
+  const createAdminUser = async (): Promise<boolean> => {
+    try {
+      console.log('👑 Creating admin user...');
+      
+      const response = await fetch(`${API_BASE_URL}/auth/create-admin`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Admin user created:', data);
+        alert(`Admin user created successfully!\nEmail: admin@supplimax.com\nPassword: admin123`);
+        return true;
+      } else {
+        console.error('❌ Failed to create admin user');
+        return false;
+      }
+    } catch (error) {
+      console.error('🚨 Create admin error:', error);
+      return false;
+    }
+  };
+
+  // ✅ Test Backend Connection
+  const testBackendConnection = async (): Promise<boolean> => {
+    try {
+      console.log('🔗 Testing backend connection...');
+      
+      const response = await fetch(`${API_BASE_URL}/auth/health`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Backend is running:', data);
+        alert(`Backend Status: ${data.status}\nMessage: ${data.message}`);
+        return true;
+      } else {
+        console.error('❌ Backend health check failed');
+        alert('Backend is not responding properly');
+        return false;
+      }
+    } catch (error) {
+      console.error('🚨 Backend connection failed:', error);
+      alert('Cannot connect to backend! Make sure it\'s running on port 5000.');
+      return false;
+    }
+  };
+
   const logout = () => {
+    localStorage.removeItem('token');
     localStorage.removeItem('user_data');
     setUser(null);
     setIsAuthenticated(false);
-    console.log('User logged out');
+    console.log('✅ User logged out');
   };
 
   const value: AuthContextType = {

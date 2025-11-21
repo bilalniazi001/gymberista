@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import React from 'react';
 import { ArrowRight } from 'lucide-react';
 
@@ -11,13 +11,40 @@ interface ExclusiveItem {
 }
 
 interface ExclusiveItemsProps {
-  initialData: ExclusiveItem[];
+  // Prop ko optional ya ignore kar diya gaya hai for hardcoding
+  initialData?: ExclusiveItem[]; 
 }
 
-export default function ExclusiveItems({ initialData }: ExclusiveItemsProps) {
-  const exclusiveItems = initialData || [];
+// ✅ Hardcoded Data for display
+const DUMMY_EXCLUSIVE_DATA: ExclusiveItem[] = [
+    { 
+        id: '1', 
+        name: 'Whey Protein Powder: Advanced Mass Gainer', 
+        description: 'Powerful blend for muscle recovery.', 
+        price: 59.99, 
+        isExclusive: true 
+    },
+    { 
+        id: '2', 
+        name: 'Pre-Workout Energy Boost & Focus', 
+        description: 'Maximum energy and sustained focus.', 
+        price: 34.50, 
+        isExclusive: true 
+    },
+    { 
+        id: '3', 
+        name: 'BCAA Recovery Complex: Tropical Punch', 
+        description: 'Essential amino acids for fast recovery.', 
+        price: 24.99, 
+        isExclusive: false 
+    },
+];
 
-  // ✅ Hardcoded Background Images - No Image component errors
+
+export default function ExclusiveItems({ initialData }: ExclusiveItemsProps) {
+  // Data ab DUMMY_EXCLUSIVE_DATA se liya jaayega
+  const exclusiveItems = DUMMY_EXCLUSIVE_DATA; 
+
   const backgroundImages = {
     large: "https://www.masculn.com/cdn/shop/articles/How_to_Take_Gym_Supplements_Safely_and_Effectively_1200x1200.jpg?v=1698324887",
     small1: "https://client.shivsofts.com/blog/uploads/1720764771.jpeg",  
@@ -27,12 +54,13 @@ export default function ExclusiveItems({ initialData }: ExclusiveItemsProps) {
   const largeItem = exclusiveItems[0];
   const smallItem1 = exclusiveItems[1];
   const smallItem2 = exclusiveItems[2];
-
+  
+  // Fallback check
   if (!largeItem) {
     return (
       <section className="py-10 md:py-16 bg-white">
         <div className="container mx-auto px-4 text-center text-gray-500">
-          No exclusive items found.
+          Hardcoded data is missing. Check DUMMY_EXCLUSIVE_DATA array.
         </div>
       </section>
     );
@@ -47,21 +75,19 @@ export default function ExclusiveItems({ initialData }: ExclusiveItemsProps) {
           {/* LEFT SIDE - LARGE BANNER */}
           {/* ==================== */}
           <div className="relative overflow-hidden p-6 md:p-10 lg:p-12 h-[450px] md:h-[500px] shadow-lg bg-gray-900 border border-gray-800 ">
-            {/* ✅ Background Image with img tag */}
+            {/* Background Image with img tag */}
             <img
               src={backgroundImages.large}
               alt="Exclusive Product Background"
               className="absolute inset-0 w-full h-full object-cover opacity-80"
             />
-            {/*
-            <div className="absolute inset-y-0 right-0 w-3/5 bg-red-600 transform skew-x-[15deg] -translate-x-1/4 mix-blend-multiply opacity-90"></div>*/}
             
             {/* Dark Overlay for Better Text Readability */}
-            {/*<div className="absolute inset-0 bg-black opacity-50"></div>*/}
-
-            {/* Content */}
+            <div className="absolute inset-0 bg-black opacity-40"></div>
+            
+            {/* Content - Ab yeh show hoga */}
             <div className="relative z-10 max-w-[50%] h-full  flex flex-col justify-end ">
-              {/*<span className="text-sm font-semibold uppercase tracking-widest text-blue-300 mb-2 inline-block">
+              <span className="text-sm font-semibold uppercase tracking-widest text-blue-300 mb-2 inline-block">
                 {largeItem.isExclusive ? 'Exclusive Deal' : 'Special Product'}
               </span>
               <h3 className="text-2xl md:text-3xl font-extrabold leading-snug text-white mb-3">
@@ -69,7 +95,7 @@ export default function ExclusiveItems({ initialData }: ExclusiveItemsProps) {
               </h3>
               <p className="text-lg md:text-xl font-bold text-yellow-400 mb-6">
                 ${largeItem.price.toFixed(2)}
-              </p>*/}
+              </p>
               <a
                 href={`/product`}
                 className="inline-flex items-center  space-x-2 px-6 py-3  bg-white text-gray-900 font-bold text-sm rounded-lg shadow-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 w-fit"
@@ -88,15 +114,12 @@ export default function ExclusiveItems({ initialData }: ExclusiveItemsProps) {
             {/* SMALL ITEM 1 */}
             {smallItem1 ? (
               <div className="relative overflow-hidden p-6 h-[213px] md:h-[238px] flex items-center justify-end shadow-lg bg-gray-900 border border-gray-800 ">
-                {/* ✅ Background Image with img tag */}
+                {/* Background Image with img tag */}
                 <img
                   src={backgroundImages.small1}
                   alt="Exclusive Product Background"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
-                
-                {/* Gray Diagonal Overlay */}
-                {/*<div className="absolute inset-y-0 left-0 w-3/5 bg-gray-800 transform -skew-x-[15deg] translate-x-1/4 mix-blend-multiply opacity-80"></div>*/}
                 
                 {/* Dark Overlay */}
                 <div className="absolute inset-0 bg-black opacity-70"></div>
@@ -123,7 +146,7 @@ export default function ExclusiveItems({ initialData }: ExclusiveItemsProps) {
                 </div>
               </div>
             ) : (
-              // Fallback agar smallItem1 nahi hai
+              // Fallback
               <div className="relative overflow-hidden p-6 h-[213px] md:h-[238px] flex items-center justify-center bg-gradient-to-br from-purple-500 to-pink-600 shadow-lg">
                 <div className="absolute inset-0 bg-black opacity-30"></div>
                 <div className="relative z-10 text-white text-center">
@@ -136,15 +159,12 @@ export default function ExclusiveItems({ initialData }: ExclusiveItemsProps) {
             {/* SMALL ITEM 2 */}
             {smallItem2 ? (
               <div className="relative overflow-hidden p-6 h-[213px] md:h-[238px] flex items-center shadow-lg bg-gray-900 border border-gray-800">
-                {/* ✅ Background Image with img tag */}
+                {/* Background Image with img tag */}
                 <img
                   src={backgroundImages.small2}
                   alt="Exclusive Product Background"
                   className="absolute inset-0 w-full h-full object-cover opacity-80"
                 />
-                
-                {/* Red Diagonal Overlay */}
-                {/*<div className="absolute inset-y-0 right-0 w-3/5 bg-red-600 transform skew-x-[15deg] -translate-x-1/4 mix-blend-multiply opacity-90"></div>*/}
                 
                 {/* Dark Overlay */}
                 <div className="absolute inset-0 bg-black opacity-40"></div>
@@ -171,7 +191,7 @@ export default function ExclusiveItems({ initialData }: ExclusiveItemsProps) {
                 </div>
               </div>
             ) : (
-              // Fallback agar smallItem2 nahi hai
+              // Fallback
               <div className="relative overflow-hidden p-6 h-[213px] md:h-[238px] flex items-center justify-center bg-gradient-to-br from-blue-500 to-green-600 shadow-lg">
                 <div className="absolute inset-0 bg-black opacity-30"></div>
                 <div className="relative z-10 text-white text-center">

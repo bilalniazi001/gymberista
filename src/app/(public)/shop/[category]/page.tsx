@@ -1,10 +1,10 @@
 // app/shop/[category]/page.tsx
-
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
+// ✅ UPDATED: id string type ki hai
 interface Product {
-  id: string;
+  id: string; // ✅ CHANGED: number -> string
   name: string;
   price: number;
   description: string;
@@ -15,12 +15,12 @@ interface Product {
   onSale: boolean;
   isFeatured?: boolean;
   isExclusive?: boolean;
-  isNewArrival?:boolean;
+  isNewArrival?: boolean;
 }
 
 async function getCategoryProducts(category: string): Promise<Product[]> {
   try {
-    // ✅ JSON Server se saare products fetch karein
+    // ✅ NestJS backend se products fetch karein
     const res = await fetch('http://localhost:5000/products', {
       cache: 'no-store'
     });
@@ -32,13 +32,12 @@ async function getCategoryProducts(category: string): Promise<Product[]> {
     
     const allProducts = await res.json();
     
-    // ✅ Frontend mein category filter karein (JSON Server query reliable nahi hai)
+    // ✅ Frontend mein category filter karein
     const filteredProducts = allProducts.filter((product: Product) => 
       product.category.toLowerCase() === category.toLowerCase()
     );
     
     console.log(` Category: ${category}, Found: ${filteredProducts.length} products`);
-    console.log('All products:', allProducts);
     
     return filteredProducts;
   } catch (error) {
@@ -112,7 +111,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {products.map((product) => (
-              <Link href={`/product/${product.id}`} key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition duration-300 group">
+              <Link href={`/products/${product.id}`} key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition duration-300 group">
                 {/* ✅ Product Image - Size adjusted and white background */}
                 <div className="relative h-56 bg-white overflow-hidden flex items-center justify-center p-4">
                   <img

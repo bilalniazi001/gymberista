@@ -16,6 +16,7 @@ interface ProductItem {
   rating: number; 
   imageUrl: string;
   isNewArrival?: boolean; 
+  _id?: string; // ✅ MongoDB ID support
 }
 
 const API_URL = 'http://localhost:5000/products?isFeatured=true';
@@ -42,6 +43,17 @@ const ProductCard: React.FC<{ product: ProductItem; variants: any }> = ({ produc
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
   
+  // ✅ Safe product ID getter
+  const getProductId = () => {
+    return product.id || product._id || `temp-${Math.random().toString(36).substr(2, 9)}`;
+  };
+
+  // ✅ Safe product URL
+  const getProductUrl = () => {
+    const productId = getProductId();
+    return productId && !productId.includes('temp-') ? `/product/${productId}` : '#';
+  };
+
   // ✅ Old Price Calculate Karne Ka Formula
   const oldPrice = product.discountPercentage > 0 
     ? product.price / (1 - product.discountPercentage / 100)
@@ -49,12 +61,15 @@ const ProductCard: React.FC<{ product: ProductItem; variants: any }> = ({ produc
 
   const stars = Array(5).fill(0).map((_, i) => (
     <Star 
-      key={i} 
+      key={`star-${getProductId()}-${i}`} // ✅ Unique key with product ID
       size={16} 
       fill={i < Math.floor(product.rating) ? '#FBBF24' : 'none'} 
       stroke="#FBBF24" 
     />
   ));
+
+  const productUrl = getProductUrl();
+  const productId = getProductId();
 
   return (
     <motion.div 
@@ -108,11 +123,22 @@ const ProductCard: React.FC<{ product: ProductItem; variants: any }> = ({ produc
             <button className="p-3 bg-white rounded-full shadow-lg hover:bg-red-50 transition-all duration-300 transform hover:scale-110">
               <Heart size={20} className="text-gray-700 hover:text-red-500 transition-colors" />
             </button>
-           <Link href={`/product/${product.id}`} passHref legacyBehavior>
-  <button className="p-3 bg-green-700 rounded-full shadow-lg hover:bg-[#629D23] transition-all duration-300 transform hover:scale-110">
-    <Eye size={20} className="text-white transition-colors" />
-  </button>
-</Link>
+            
+            {/* ✅ Safe Link - only if valid product ID */}
+            {productUrl !== '#' ? (
+              <Link href={productUrl}>
+                <button className="p-3 bg-green-700 rounded-full shadow-lg hover:bg-[#629D23] transition-all duration-300 transform hover:scale-110">
+                  <Eye size={20} className="text-white transition-colors" />
+                </button>
+              </Link>
+            ) : (
+              <button 
+                className="p-3 bg-gray-500 rounded-full shadow-lg cursor-not-allowed"
+                title="Product not available"
+              >
+                <Eye size={20} className="text-white" />
+              </button>
+            )}
           </motion.div>
         </div>
 
@@ -127,6 +153,13 @@ const ProductCard: React.FC<{ product: ProductItem; variants: any }> = ({ produc
         {product.discountPercentage > 0 && (
           <span className="absolute top-3 right-3 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded-full z-10">
             -{product.discountPercentage}%
+          </span>
+        )}
+
+        {/* ✅ Invalid Product Warning */}
+        {productUrl === '#' && (
+          <span className="absolute bottom-3 left-3 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full z-10">
+            NO ID
           </span>
         )}
       </div>
@@ -157,6 +190,7 @@ const ProductCard: React.FC<{ product: ProductItem; variants: any }> = ({ produc
       <AnimatePresence>
         {isHovered && (
           <motion.button
+            key={`add-to-cart-${productId}`} // ✅ Unique key for animation
             initial={{ y: 50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 50, opacity: 0 }}
@@ -198,7 +232,32 @@ export default function FeaturedProducts() {
         
         // ✅ Data validation - ensure it's an array
         if (Array.isArray(data)) {
-          setProducts(data);
+          // ✅ Data mapping with proper IDs
+          const mappedProducts = data.map((item: any, index: number) => {
+            // ✅ Multiple ID sources check karein
+            const productId = item.id || item._id?.toString() || `temp-${index + 1}`;
+            
+            console.log(`🔍 [FEATURED] Product ${index}:`, {
+              name: item.name,
+              id: item.id,
+              _id: item._id,
+              finalId: productId
+            });
+            
+            return {
+              id: productId,
+              _id: item._id,
+              name: item.name || 'Unnamed Product',
+              category: item.category || 'Uncategorized',
+              price: item.price || 0,
+              discountPercentage: item.discountPercentage || 0,
+              rating: item.rating || 0,
+              imageUrl: item.imageUrl || '',
+              isNewArrival: item.isNewArrival || false,
+            };
+          });
+          
+          setProducts(mappedProducts);
         } else {
           throw new Error('Invalid data format received from API');
         }
@@ -256,12 +315,25 @@ export default function FeaturedProducts() {
     );
   }
 
+  // ✅ Count valid vs invalid products
+  const validProducts = products.filter(p => p.id && !p.id.includes('temp-'));
+  const invalidProducts = products.filter(p => p.id.includes('temp-'));
+
   return (
     <section className="bg-gray-200 py-12 md:py-16">
       <div className="container mx-auto px-4">
         <div className="text-center mb-10">
           <p className="text-sm text-gray-600 uppercase tracking-widest mb-2">Shop Our New Releases</p>
           <h2 className="text-4xl font-extrabold text-gray-900">Featured Products</h2>
+          
+          {/* ✅ Products Status Info */}
+          {invalidProducts.length > 0 && (
+            <div className="mt-4 p-3 bg-yellow-100 border border-yellow-400 rounded-lg max-w-md mx-auto">
+              <p className="text-sm text-yellow-700">
+                <strong>Note:</strong> {invalidProducts.length} products have invalid IDs and cannot be viewed in detail.
+              </p>
+            </div>
+          )}
         </div>
 
         {products.length === 0 ? (
@@ -276,8 +348,12 @@ export default function FeaturedProducts() {
             initial="hidden"
             animate="visible"
           >
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} variants={itemVariants} />
+            {products.map((product, index) => (
+              <ProductCard 
+                key={product.id} // ✅ Now guaranteed to be unique
+                product={product} 
+                variants={itemVariants} 
+              />
             ))}
           </motion.div>
         )}

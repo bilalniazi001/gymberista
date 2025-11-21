@@ -4,14 +4,25 @@ import React from 'react';
 import { Star, ShoppingCart, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
+//  Complete Product Interface with all optional fields
 interface Product {
-  id: number;
+  id: string;
   name: string;
   category: string;
   price: number;
   rating: number;
   imageUrl: string;
   description: string;
+  cost?: number;
+  quantityInStock?: number;
+  size?: string;
+  color?: string;
+  onSale?: boolean;
+  discountPercentage?: number;
+  isNewArrival?: boolean;
+  isInStock?: boolean;
+  isFeatured?: boolean;
+  isExclusive?: boolean;
 }
 
 interface ProductDetailClientProps {
@@ -19,6 +30,39 @@ interface ProductDetailClientProps {
 }
 
 const ProductDetailClient: React.FC<ProductDetailClientProps> = ({ product }) => {
+  // ✅ Safe value getter functions to avoid undefined errors
+  const getDiscountPercentage = () => {
+    return product?.discountPercentage || 0;
+  };
+
+  const getIsOnSale = () => {
+    return product?.onSale || false;
+  };
+
+  const getIsNewArrival = () => {
+    return product?.isNewArrival || false;
+  };
+
+  const getIsFeatured = () => {
+    return product?.isFeatured || false;
+  };
+
+  const getIsExclusive = () => {
+    return product?.isExclusive || false;
+  };
+
+  const getIsInStock = () => {
+    return product?.isInStock !== undefined ? product.isInStock : true;
+  };
+
+  const getOriginalPrice = () => {
+    const discount = getDiscountPercentage();
+    if (discount > 0 && product) {
+      return product.price / (1 - discount / 100);
+    }
+    return product?.price || 0;
+  };
+
   const handleWhatsAppShare = () => {
     if (!product) return;
 
@@ -47,7 +91,7 @@ const ProductDetailClient: React.FC<ProductDetailClientProps> = ({ product }) =>
         <h1 className="text-5xl font-extrabold text-red-600 mb-4">404</h1>
         <p className="text-xl text-[#2D3B29] mb-6">Sorry, There is no product.</p>
         <Link 
-          href="/product" 
+          href="/products"
           className="flex items-center text-[#629D23] hover:text-lime-700 transition-colors font-medium"
         >
           <ArrowLeft size={20} className="mr-2"/> Go To Listing Page.
@@ -56,6 +100,20 @@ const ProductDetailClient: React.FC<ProductDetailClientProps> = ({ product }) =>
     );
   }
 
+  //  Pre-calculate values to avoid multiple function calls
+  const discountPercentage = getDiscountPercentage();
+  const isOnSale = getIsOnSale();
+  const isNewArrival = getIsNewArrival();
+  const isFeatured = getIsFeatured();
+  const isExclusive = getIsExclusive();
+  const isInStock = getIsInStock();
+  const originalPrice = getOriginalPrice();
+
+  //  Debug info
+  console.log(' [PRODUCT CLIENT] Product data:', product);
+  console.log(' [PRODUCT CLIENT] Discount Percentage:', discountPercentage);
+  console.log(' [PRODUCT CLIENT] On Sale:', isOnSale);
+
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-10 lg:p-16 font-sans">
       <div className="max-w-6xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden transition-all duration-500">
@@ -63,10 +121,10 @@ const ProductDetailClient: React.FC<ProductDetailClientProps> = ({ product }) =>
         {/* Back Button */}
         <div className="p-6">
           <Link 
-            href="/product" 
+            href="/product"
             className="flex items-center text-[#629D23] hover:text-lime-700 transition-colors font-medium"
           >
-            <ArrowLeft size={20} className="mr-2"/> Back
+            <ArrowLeft size={20} className="mr-2"/> Back to Products
           </Link>
         </div>
 
@@ -80,9 +138,33 @@ const ProductDetailClient: React.FC<ProductDetailClientProps> = ({ product }) =>
               alt={product.name} 
               className="max-w-full max-h-96 object-contain transition-transform duration-500 hover:scale-105"
               onError={(e) => {
-                e.currentTarget.src = `https://placehold.co/600x400/4f46e5/ffffff?text=${product.name}`;
+                e.currentTarget.src = `https://placehold.co/600x400/4f46e5/ffffff?text=${encodeURIComponent(product.name)}`;
               }}
             />
+            
+            {/*  SAFE: Product Badges with conditional checks */}
+            <div className="absolute top-4 left-4 flex flex-col space-y-2">
+              {isOnSale && discountPercentage > 0 && (
+                <span className="bg-red-600 text-white text-sm font-bold px-3 py-1 rounded-full shadow-lg">
+                  {discountPercentage}% OFF
+                </span>
+              )}
+              {isNewArrival && (
+                <span className="bg-green-600 text-white text-sm font-bold px-3 py-1 rounded-full shadow-lg">
+                  NEW
+                </span>
+              )}
+              {isFeatured && (
+                <span className="bg-blue-600 text-white text-sm font-bold px-3 py-1 rounded-full shadow-lg">
+                  FEATURED
+                </span>
+              )}
+              {isExclusive && (
+                <span className="bg-purple-600 text-white text-sm font-bold px-3 py-1 rounded-full shadow-lg">
+                  EXCLUSIVE
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Right Column: Product Details */}
@@ -116,11 +198,56 @@ const ProductDetailClient: React.FC<ProductDetailClientProps> = ({ product }) =>
               
               {/* Price */}
               <div className="mb-6">
-                <p className="text-4xl font-extrabold text-[#629D23] tracking-tight">
-                  ${product.price.toFixed(2)}
-                </p>
+                <div className="flex items-center space-x-3">
+                  <p className="text-4xl font-extrabold text-[#629D23] tracking-tight">
+                    ${product.price.toFixed(2)}
+                  </p>
+                  {/*  SAFE: Discount price with conditional check */}
+                  {isOnSale && discountPercentage > 0 && (
+                    <span className="text-xl text-red-600 line-through font-semibold">
+                      ${originalPrice.toFixed(2)}
+                    </span>
+                  )}
+                </div>
                 <span className="text-sm text-gray-400 font-medium">Inclusive of all taxes</span>
+                
+                {/*  Savings calculation */}
+                {isOnSale && discountPercentage > 0 && (
+                  <p className="text-green-600 font-semibold mt-1">
+                    You save: ${(originalPrice - product.price).toFixed(2)} ({discountPercentage}% off)
+                  </p>
+                )}
               </div>
+
+              {/* Additional Product Info */}
+              {(product.size || product.color || product.quantityInStock !== undefined) && (
+                <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                  <h3 className="font-semibold text-gray-700 mb-2">Product Details</h3>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    {product.size && (
+                      <div>
+                        <span className="font-medium">Size:</span> {product.size}
+                      </div>
+                    )}
+                    {product.color && (
+                      <div>
+                        <span className="font-medium">Flavor:</span> {product.color}
+                      </div>
+                    )}
+                    {product.quantityInStock !== undefined && (
+                      <div>
+                        <span className="font-medium">Stock:</span> {product.quantityInStock} units
+                      </div>
+                    )}
+                    <div>
+                      <span className="font-medium">Status:</span> 
+                      <span className={`ml-1 ${isInStock ? 'text-green-600' : 'text-red-600'}`}>
+                        {isInStock ? 'In Stock' : 'Out of Stock'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Product Description */}
               <div className="mb-8">
@@ -135,9 +262,12 @@ const ProductDetailClient: React.FC<ProductDetailClientProps> = ({ product }) =>
 
             <div className="flex space-x-4 mt-6 pt-4 border-t border-gray-100">
               {/* Add to Cart Button */}
-              <button className="flex-1 flex items-center justify-center bg-[#629D23] text-white py-4 rounded-full font-bold text-lg hover:bg-lime-700 transition-colors duration-300 shadow-lg hover:shadow-xl">
+              <button 
+                className="flex-1 flex items-center justify-center bg-[#629D23] text-white py-4 rounded-full font-bold text-lg hover:bg-lime-700 transition-colors duration-300 shadow-lg hover:shadow-xl disabled:bg-gray-400 disabled:cursor-not-allowed"
+                disabled={!isInStock}
+              >
                 <ShoppingCart size={24} className="mr-3"/>
-                Add to Cart
+                {isInStock ? 'Add to Cart' : 'Out of Stock'}
               </button>
               
               <button 

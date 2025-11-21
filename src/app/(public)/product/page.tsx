@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import AuthModal from '@/components/AuthModal';
 
-
+// UPDATED: id string type ki hai
 interface Product {
-  id: number;
+  id: string; //  CHANGED: number -> string
   name: string;
   category: string;
   price: number;
@@ -32,20 +32,57 @@ const fetchProducts = async (): Promise<Product[]> => {
         throw new Error(`API can't fetch data. Status: ${response.status}`);
     }
 
-    const data: Product[] = await response.json();
-    return data;
+    const data: any[] = await response.json();
+    
+    // DEBUG: Raw API response check karein
+    console.log(' [PRODUCT LIST] Raw API response:', data);
+    
+    // PROPERLY MAP DATA with ID validation
+    const mappedProducts = data.map((item, index) => {
+      // Pehle item.id check karein, phir item._id, phir temporary ID
+      const productId = item.id || item._id?.toString() || `temp-${index + 1}`;
+      
+      console.log(` [PRODUCT LIST] Mapping product ${index}:`, {
+        name: item.name,
+        originalId: item.id,
+        mongoId: item._id,
+        finalId: productId
+      });
+      
+      //  ID validation - agar ID invalid hai toh skip karein
+      if (!productId || productId === 'undefined' || productId.includes('temp-')) {
+        console.warn(` [PRODUCT LIST] Invalid ID for product: ${item.name}`, productId);
+      }
+      
+      return {
+        id: productId, //  Ensure ID is string
+        name: item.name || 'Unnamed Product',
+        category: item.category || 'Uncategorized',
+        price: item.price || 0,
+        rating: item.rating || 0,
+        imageUrl: item.imageUrl || '',
+      };
+    }).filter(product => product.id && product.id !== 'undefined'); //  Filter out invalid products
+
+    console.log(' [PRODUCT LIST] Mapped products:', mappedProducts);
+    return mappedProducts;
   } catch (error) {
     console.error("Data fetch error:", error);
     return []; 
   }
 };
 
+//  UPDATED: ProductCard component with ID validation
 const ProductCard: React.FC<{ 
   product: Product;
   onAddToCart: (product: Product) => void;
   showAuthModal: () => void;
 }> = ({ product, onAddToCart, showAuthModal }) => {
   const { isAuthenticated } = useAuth();
+
+  //  ID validation check
+  const isValidProduct = product.id && product.id !== 'undefined' && !product.id.includes('temp-');
+  const productUrl = isValidProduct ? `/product/${product.id}` : '#';
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -59,10 +96,24 @@ const ProductCard: React.FC<{
     onAddToCart(product);
   };
 
+  const handleProductClick = (e: React.MouseEvent) => {
+    if (!isValidProduct) {
+      e.preventDefault();
+      console.error(' [PRODUCT CARD] Invalid product ID:', product.id);
+      alert('This product cannot be opened right now. Please try again later.');
+    } else {
+      console.log(' [PRODUCT CARD] Navigating to product:', product.id);
+    }
+  };
+
   return (
-    <Link href={`/product/${product.id}`} className="block">
+    <Link 
+      href={productUrl}
+      onClick={handleProductClick}
+      className={`block ${!isValidProduct ? 'cursor-not-allowed opacity-70' : ''}`}
+    >
       <div className="bg-white p-4 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group border border-gray-100 cursor-pointer">
-        {/* ✅ Image container - Size adjusted */}
+        {/*  Image container - Size adjusted */}
         <div className="relative w-full h-40 mb-4 overflow-hidden bg-white rounded-lg flex items-center justify-center p-4">
             <img 
                 src={product.imageUrl} 
@@ -75,6 +126,13 @@ const ProductCard: React.FC<{
             <span className="absolute top-2 left-2 px-2 py-1 text-xs font-semibold text-white bg-[#629D23] rounded-full shadow-md">
                 {product.category}
             </span>
+            
+            {/*  Show warning for invalid products */}
+            {!isValidProduct && (
+              <span className="absolute top-2 right-2 px-2 py-1 text-xs font-semibold text-white bg-red-600 rounded-full shadow-md">
+                NO ID
+              </span>
+            )}
         </div>
         
         <h3 className="text-lg font-bold text-[#2D3B29] mb-1 truncate">{product.name}</h3>
@@ -95,6 +153,16 @@ const ProductCard: React.FC<{
         >
           Add to Cart
         </button>
+
+        {/* Invalid product overlay */}
+        {!isValidProduct && (
+          <div className="absolute inset-0 bg-red-50 bg-opacity-80 flex items-center justify-center rounded-xl">
+            <div className="text-center p-4">
+              <AlertTriangle className="w-8 h-8 text-red-600 mx-auto mb-2" />
+              <p className="text-red-600 font-semibold text-sm">Product Not Available</p>
+            </div>
+          </div>
+        )}
       </div>
     </Link>
   );
@@ -108,7 +176,7 @@ const ProductList: React.FC = () => {
   const [sortOption, setSortOption] = useState<'price_asc' | 'price_desc' | 'rating_desc' | 'default'>('default');
   const [showAuthModal, setShowAuthModal] = useState(false);
   
-  // ✅ Filters mein category add kiya
+  //  Filters mein category add kiya
   const [filters, setFilters] = useState<Filters>({
     category: 'all',
     minPrice: 0,
@@ -125,7 +193,7 @@ const ProductList: React.FC = () => {
       setIsLoading(true);
       try {
         const data = await fetchProducts();
-        console.log('API Response:', data);
+        console.log(' [PRODUCT LIST] API Response:', data);
 
         if (data.length === 0) {
           setIsApiError(true);
@@ -148,13 +216,13 @@ const ProductList: React.FC = () => {
     loadData();
   }, []);
 
-  // ✅ Dynamically available categories calculate karein
+  //  Dynamically available categories calculate karein
   const availableCategories = useMemo(() => {
     const categories = [...new Set(products.map(product => product.category))];
     return ['all', ...categories]; // 'all' option add karein
   }, [products]);
 
-  // ✅ Filtering aur Sorting Logic - Category filter add kiya
+  //  Filtering aur Sorting Logic - Category filter add kiya
   const filteredAndSortedProducts = useMemo(() => {
     let currentProducts = products.filter(product => {
       const priceMatch = product.price >= filters.minPrice && product.price <= filters.maxPrice;
@@ -180,7 +248,7 @@ const ProductList: React.FC = () => {
     return currentProducts;
   }, [products, filters, sortOption]);
 
-  // ✅ Handler Functions
+  //  Handler Functions
   const handlePriceRangeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseFloat(e.target.value);
     const name = e.target.name;
@@ -196,7 +264,7 @@ const ProductList: React.FC = () => {
     });
   };
 
-  // ✅ Category filter change handler
+  //  Category filter change handler
   const handleCategoryChange = (category: string) => {
     setFilters(prev => ({ ...prev, category }));
   };
@@ -205,7 +273,7 @@ const ProductList: React.FC = () => {
     setSortOption(e.target.value as typeof sortOption);
   };
 
-  // ✅ Add to Cart Handler with Authentication Check
+  //  Add to Cart Handler with Authentication Check
   const handleAddToCart = (product: Product) => {
     if (!isAuthenticated) {
       setShowAuthModal(true);
@@ -217,10 +285,17 @@ const ProductList: React.FC = () => {
     // Yahan aap actual cart logic implement kar sakte hain
   };
 
-  // ✅ Show Auth Modal Handler
+  //  Show Auth Modal Handler
   const handleShowAuthModal = () => {
     setShowAuthModal(true);
   };
+
+  //  Debug: Count valid vs invalid products
+  const validProductsCount = filteredAndSortedProducts.filter(p => 
+    p.id && p.id !== 'undefined' && !p.id.includes('temp-')
+  ).length;
+  
+  const invalidProductsCount = filteredAndSortedProducts.length - validProductsCount;
 
   if (isLoading) {
     return (
@@ -262,14 +337,14 @@ const ProductList: React.FC = () => {
             Supplements For Everyone
           </p>
 
-          {/* ✅ Welcome Message for Authenticated Users */}
+          {/* Welcome Message for Authenticated Users */}
           {isAuthenticated && user && (
             <div className="mt-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg max-w-md mx-auto">
               Welcome back, <strong>{user.name}</strong>!  Happy shopping!
             </div>
           )}
 
-          {/* ✅ Login Prompt for Non-Authenticated Users */}
+          {/* Login Prompt for Non-Authenticated Users */}
           {!isAuthenticated && (
             <div className="mt-4 bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded-lg max-w-md mx-auto">
               <strong>Login required!</strong> Please login to add items to cart.
@@ -286,7 +361,16 @@ const ProductList: React.FC = () => {
               Filters
             </h2>
 
-            {/* ✅ Category Filter - Dynamically */}
+            {/* Product Status Info */}
+            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-700">
+                <strong>Products Status:</strong><br/>
+                Valid: <strong>{validProductsCount}</strong><br/>
+                Invalid: <strong>{invalidProductsCount}</strong>
+              </p>
+            </div>
+
+            {/* Category Filter - Dynamically */}
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-[#2D3B29] mb-3">Category</h3>
               {availableCategories.map(cat => (
@@ -349,12 +433,17 @@ const ProductList: React.FC = () => {
           <main className="lg:flex-1">
             {/* Top Bar: Sort Dropdown and Results Count */}
             <div className="flex justify-between items-center mb-6 p-4 bg-white rounded-xl shadow-md border border-gray-100">
-              <p className="text-lg font-medium text-[#2D3B29]">
-                <span className="font-bold text-lime-600">{filteredAndSortedProducts.length}</span> Products found
-                {filters.category !== 'all' && (
-                  <span className="ml-2 text-lime-500">in {filters.category}</span>
-                )}
-              </p>
+              <div>
+                <p className="text-lg font-medium text-[#2D3B29]">
+                  <span className="font-bold text-lime-600">{validProductsCount}</span> Valid Products found
+                  {invalidProductsCount > 0 && (
+                    <span className="ml-2 text-red-500">({invalidProductsCount} invalid)</span>
+                  )}
+                  {filters.category !== 'all' && (
+                    <span className="ml-2 text-lime-500">in {filters.category}</span>
+                  )}
+                </p>
+              </div>
 
               {/* Sort Dropdown */}
               <div className="relative inline-block">
@@ -375,24 +464,29 @@ const ProductList: React.FC = () => {
             </div>
 
             {/* Product Grid */}
-            {filteredAndSortedProducts.length > 0 ? (
+            {validProductsCount > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                {filteredAndSortedProducts.map(product => (
-                  <ProductCard 
-                    key={product.id} 
-                    product={product} 
-                    onAddToCart={handleAddToCart}
-                    showAuthModal={handleShowAuthModal}
-                  />
-                ))}
+                {filteredAndSortedProducts
+                  .filter(product => product.id && product.id !== 'undefined' && !product.id.includes('temp-'))
+                  .map(product => (
+                    <ProductCard 
+                      key={product.id} 
+                      product={product} 
+                      onAddToCart={handleAddToCart}
+                      showAuthModal={handleShowAuthModal}
+                    />
+                  ))}
               </div>
             ) : (
               <div className="text-center p-12 bg-white rounded-xl shadow-xl mt-10">
                 <p className="text-2xl font-semibold text-[#2D3B29]">
-                  No products found.
+                  No valid products found.
                 </p>
                 <p className="text-md text-[#2D3B29] mt-2">
-                  Adjust your filters and try again.
+                  {invalidProductsCount > 0 ? 
+                    `${invalidProductsCount} products have invalid IDs. Check backend data.` : 
+                    'Adjust your filters and try again.'
+                  }
                 </p>
               </div>
             )}

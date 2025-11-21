@@ -28,9 +28,10 @@ const STATS_DATA = [
     { value: '60K+', label: 'Stores Worldwide' },
 ];
 
-const calculateTimeLeft = () => {
-  let year = new Date().getFullYear();
-  let difference = +new Date(`10/20/${year + 1}`) - +new Date(); 
+// --- FLASH SALE TIMER LOGIC MODIFICATION ---
+// A more realistic calculation for a short-term sale (e.g., 7 days from today)
+const calculateTimeLeft = (targetDate: Date) => {
+  let difference = +targetDate - +new Date(); 
   let timeLeft: { [key: string]: number } = {
     days: 0,
     hours: 0, 
@@ -50,35 +51,44 @@ const calculateTimeLeft = () => {
 };
 
 const FlashSaleTimer: React.FC = () => {
-  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+    // Set target date to 7 days from when the component mounts
+    const [targetDate] = useState(() => {
+        const date = new Date();
+        date.setDate(date.getDate() + 7);
+        return date;
+    });
+    
+    const [timeLeft, setTimeLeft] = useState(() => calculateTimeLeft(targetDate));
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setTimeLeft(calculateTimeLeft());
-    }, 1000);
-    return () => clearTimeout(timer);
-  });
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setTimeLeft(calculateTimeLeft(targetDate));
+        }, 1000);
+        return () => clearTimeout(timer);
+    });
 
-  const timerComponents = Object.keys(timeLeft).map((interval) => {
-    const value = timeLeft[interval as keyof typeof timeLeft];
-    if (value === 0 && interval !== 'seconds') {
-      return null;
-    }
+    const timerComponents = Object.keys(timeLeft).map((interval) => {
+        const value = timeLeft[interval as keyof typeof timeLeft];
+        // Only show if the value is greater than zero, or if it's seconds and there's still time left
+        if (value === 0 && interval !== 'seconds' && timeLeft.days === 0 && timeLeft.hours === 0 && timeLeft.minutes === 0) {
+            return null;
+        }
+        return (
+            <span key={interval} className="text-sm font-semibold text-white bg-red-600/70 px-2 py-1 rounded mx-1">
+                {String(value).padStart(2, '0')} {interval.charAt(0).toUpperCase()}
+            </span>
+        );
+    });
+
     return (
-      <span key={interval} className="text-sm font-semibold text-white bg-red-600/70 px-2 py-1 rounded mx-1">
-        {String(value).padStart(2, '0')} {interval.charAt(0).toUpperCase()}
-      </span>
+        <div className="flex items-center text-white text-sm bg-red-600 px-3 py-1 rounded-full shadow-lg">
+            <Clock size={16} className="mr-2" />
+            <span className="font-bold mr-2">Sale Ends In:</span>
+            {timerComponents.some(comp => comp !== null) ? timerComponents : <span className="font-semibold">Time's up!</span>}
+        </div>
     );
-  });
-
-  return (
-    <div className="flex items-center text-white text-sm bg-red-600 px-3 py-1 rounded-full shadow-lg">
-      <Clock size={16} className="mr-2" />
-      <span className="font-bold mr-2">Sale Ends In:</span>
-      {timerComponents.some(comp => comp !== null) ? timerComponents : <span className="font-semibold">Time's up!</span>}
-    </div>
-  );
 };
+// --- END TIMER MODIFICATION ---
 
 const FeatureCard: React.FC<{ number: string, icon: any, title: string, description: string }> = ({ number, icon: Icon, title, description }) => (
     <div className="p-8 border border-gray-100 shadow-sm hover:shadow-lg transition-shadow duration-300 bg-white text-center">
@@ -98,13 +108,14 @@ export default function AboutPage() {
     return (
         <main>
             <section className="relative h-[450px] bg-gray-800 flex items-center justify-center">
+                {/* Image: fill is appropriate here */}
                 <Image
                     src={aboutBannerImg} 
                     alt="Grocery store background"
                     fill
                     style={{ objectFit: 'cover' }}
                     className="opacity-50"
-                    priority // ✅ Large image ke liye priority add karein
+                    priority
                 />
                 <div className="relative z-10 text-center text-white p-6">
                     <h1 className="text-5xl md:text-6xl font-extrabold mb-4">
@@ -177,14 +188,18 @@ export default function AboutPage() {
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-8 justify-items-center">
                         {TEAM_DATA.map((member, index) => (
-                            <div key={index} className="text-center bg-white p-4 shadow-md rounded-lg max-w-[250px]">
-                                <Image
-                                    src={member.image} 
-                                    alt={member.name}
-                                    width={250}
-                                    height={250}
-                                    className="rounded-xl w-full h-auto object-cover mb-4"
-                                />
+                            <div key={index} className="text-center bg-white p-4 shadow-md rounded-lg max-w-[250px] w-full">
+                                {/* ✅ FIXED: Image with explicit width/height and 'cover' objectFit */}
+                                <div className="relative w-48 h-48 mx-auto mb-4 rounded-xl overflow-hidden">
+                                    <Image
+                                        src={member.image} 
+                                        alt={member.name}
+                                        width={192} // 48 * 4 (tailwind w-48)
+                                        height={192} // 48 * 4 (tailwind h-48)
+                                        style={{ objectFit: 'cover' }}
+                                        className="rounded-xl"
+                                    />
+                                </div>
                                 <h4 className="text-lg font-bold text-gray-800">{member.name}</h4>
                                 <p className="text-sm text-gray-500 mb-3">{member.role}</p>
                                 <div className="flex items-center justify-center text-[#629D23] text-sm">
@@ -206,13 +221,17 @@ export default function AboutPage() {
                         <div className="p-6 border border-gray-200 shadow-sm rounded-lg">
                             <div className="flex justify-between items-center mb-4">
                                 <div className="flex items-center space-x-3">
-                                    <Image 
-                                      src={teamMember1} 
-                                      alt="Andrew D. Smith" 
-                                      width={40} 
-                                      height={40} 
-                                      className="rounded-full" 
-                                    />
+                                    {/* ✅ FIXED: Avatar image with explicit width/height */}
+                                    <div className="relative w-10 h-10 rounded-full overflow-hidden">
+                                        <Image 
+                                            src={teamMember1} 
+                                            alt="Andrew D. Smith" 
+                                            width={40} // w-10 in tailwind is 40px
+                                            height={40} // h-10 in tailwind is 40px
+                                            style={{ objectFit: 'cover' }}
+                                            className="rounded-full"
+                                        />
+                                    </div>
                                     <div>
                                         <p className="font-bold text-gray-800">Andrew D. Smith</p>
                                         <p className="text-sm text-gray-500">Manager</p>
@@ -229,13 +248,17 @@ export default function AboutPage() {
                         <div className="p-6 border border-gray-200 shadow-sm rounded-lg">
                             <div className="flex justify-between items-center mb-4">
                                 <div className="flex items-center space-x-3">
-                                    <Image 
-                                      src={teamMember1} 
-                                      alt="Andrew D. Smith" 
-                                      width={40} 
-                                      height={40} 
-                                      className="rounded-full" 
-                                    />
+                                    {/* ✅ FIXED: Avatar image with explicit width/height */}
+                                    <div className="relative w-10 h-10 rounded-full overflow-hidden">
+                                        <Image 
+                                            src={teamMember1} 
+                                            alt="Andrew D. Smith" 
+                                            width={40}
+                                            height={40}
+                                            style={{ objectFit: 'cover' }}
+                                            className="rounded-full"
+                                        />
+                                    </div>
                                     <div>
                                         <p className="font-bold text-gray-800">Andrew D. Smith</p>
                                         <p className="text-sm text-gray-500">Manager</p>
@@ -252,7 +275,6 @@ export default function AboutPage() {
                     </div>
                 </div>
             </section>
-
         </main>
     );
 }
