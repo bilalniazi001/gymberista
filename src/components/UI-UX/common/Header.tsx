@@ -12,7 +12,6 @@ interface TopLink {
   name: string;
   href: string;
 }
-
 interface DropdownItem {
   name: string;
   href: string;
