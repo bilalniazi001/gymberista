@@ -52,7 +52,7 @@ export default function ProductForm({ initialData }: ProductFormProps) {
 
   // ✅ Debugging
   useEffect(() => {
-    console.log('🔧 ProductForm Debug:');
+    console.log(' ProductForm Debug:');
     console.log('   - Mode:', isEditMode ? 'EDIT' : 'ADD');
     console.log('   - Initial Data:', initialData);
     console.log('   - Product ID:', initialData?.id);

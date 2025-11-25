@@ -3,8 +3,6 @@
 import React from 'react';
 import { Mail, Phone, Clock, DollarSign, RefreshCw, Headset, Percent } from 'lucide-react';
 import { Facebook, Twitter, Instagram, Youtube } from 'lucide-react';
-// Note: GooglePlay and Apple are placeholders, as lucide-react doesn't have direct icons. 
-// For real app download links, you'd use your actual icons or SVG.
 
 // --- DATA ---
 
@@ -23,12 +21,8 @@ const QUICK_LINKS = [
 
 // --- COMPONENTS ---
 
-/**
- * Single Feature Item
- */
 const FeatureItem: React.FC<{ icon: any, title: string, desc: string }> = ({ icon: Icon, title, desc }) => (
   <div className="flex items-start space-x-4">
-    {/* Icon with light background, matching the design */}
     <div className="flex-shrink-0 w-12 h-12 bg-white/30 rounded-full flex items-center justify-center p-2">
       <Icon size={24} className="text-white" />
     </div>
@@ -44,11 +38,11 @@ const FeatureItem: React.FC<{ icon: any, title: string, desc: string }> = ({ ico
  */
 export default function Footer() {
   
-  const GREEN_COLOR = 'bg-[#629D23]'; // Design se match karta hua green color
+  const GREEN_COLOR = 'bg-[#629D23]';
   const LIGHT_BG = 'bg-gray-50';
   const BORDER_COLOR = 'border-gray-200';
-  const TEXT_COLOR = 'text-[#629D23]';
-  const HOVER_COLOR = 'text-[#2D3B29]'
+  const TEXT_COLOR = 'text-[#2D3B29]'; // Updated text color
+  const HOVER_COLOR = 'text-[#629D23]';
 
   return (
     <footer className="w-full">
@@ -71,7 +65,7 @@ export default function Footer() {
 
             {/* Column 1: About Company */}
             <div className="col-span-2 lg:col-span-1">
-              <h3 className="text-lg font-bold text-gray-800 mb-4">About Company</h3>
+              <h3 className={`text-lg font-bold mb-4 ${TEXT_COLOR}`}>About Company</h3>
               <ul className="space-y-3 text-sm">
                 <li className={TEXT_COLOR}>Have Question? Call Us 24/7</li>
                 <li className="text-xl font-bold text-green-600 mb-4">+258 3692 2569</li>
@@ -85,10 +79,10 @@ export default function Footer() {
             {/* Columns 2, 3, 4: Quick Links */}
             {QUICK_LINKS.map((section, index) => (
               <div key={index} className="col-span-1">
-                <h3 className="text-lg font-bold text-gray-800 mb-4">{section.title}</h3>
+                <h3 className={`text-lg font-bold mb-4 ${TEXT_COLOR}`}>{section.title}</h3>
                 <ul className="space-y-3 text-sm">
                   {section.links.map((link, linkIndex) => (
-                    <li key={linkIndex} className={`hover:${TEXT_COLOR} transition duration-150 cursor-pointer`}>
+                    <li key={linkIndex} className={`text-[#629D23]  hover:${TEXT_COLOR} transition duration-150 cursor-pointer`}>
                       {link}
                     </li>
                   ))}
@@ -98,24 +92,22 @@ export default function Footer() {
 
             {/* Column 5: Our Newsletter */}
             <div className="col-span-2 lg:col-span-1">
-              <h3 className="text-lg font-bold text-gray-800 mb-4">Our Newsletter</h3>
-              <p className={`text-sm ${HOVER_COLOR} mb-4`}>
+              <h3 className={`text-lg font-bold mb-4 ${TEXT_COLOR}`}>Our Newsletter</h3>
+              <p className={`text-sm ${TEXT_COLOR} mb-4`}>
                 Subscribe to the mailing list to receive updates one the new arrivals and other discounts
               </p>
               
-              {/* Newsletter Input */}
               <div className="flex">
                 <input
                   type="email"
                   placeholder="Your email address"
-                  className="p-3 w-full border border-gray-300  !focus:ring-[#629D23] !focus:border-[#629D23]"
+                  className="p-3 w-full border border-gray-300 !focus:ring-[#629D23] !focus:border-[#629D23]"
                 />
-                <button className={`p-3 text-white font-semibold  ${GREEN_COLOR}  transition`}>
+                <button className={`p-3 text-white font-semibold ${GREEN_COLOR} transition`}>
                   Subscribe
                 </button>
               </div>
 
-              {/* Checkbox/Wording (Approximate matching the design) */}
               <label className="flex items-center mt-3 text-sm">
                 <input type="checkbox" className="form-checkbox text-green-600 w-4 h-4 rounded" defaultChecked />
                 <span className={`ml-2 ${TEXT_COLOR}`}>I would like to receive news and special offer</span>
@@ -125,9 +117,9 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* 3. Bottom Bar (Copyright and Payments) */}
+      {/* 3. Bottom Bar */}
       <div className="bg-white py-4 border-t border-gray-100">
-        <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center text-sm text-gray-500">
+        <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center text-sm">
           
           {/* Left: Social Icons */}
           <div className="flex items-center space-x-6 order-2 md:order-1 mt-4 md:mt-0">
@@ -141,28 +133,10 @@ export default function Footer() {
           </div>
           
           {/* Center: Copyright */}
-          <p className="order-3 md:order-2 mt-4 md:mt-0">
-            Copyright 2023 | **&copy;Ekomart**. All rights reserved.
+          <p className={`order-3 md:order-2 mt-4 md:mt-0 ${TEXT_COLOR}`}>
+            Copyright 2025 | SuppliMax. All rights reserved.
           </p>
           
-          {/* Right: Payments and Apps */}
-          <div className="flex flex-col sm:flex-row items-center space-x-4 order-1 md:order-3">
-            <div className="flex items-center space-x-2">
-                <span className="font-semibold">Payment Accepts:</span>
-                {/* Payment Icons Placeholder */}
-                <div className="flex space-x-1">
-                    {/*  */}
-                </div>
-            </div>
-            
-            <div className="flex items-center space-x-2 mt-3 sm:mt-0">
-                <span className="font-semibold">Download App:</span>
-                {/* App Download Icons Placeholder */}
-                <div className="flex space-x-2">
-                    {/*  */}
-                </div>
-            </div>
-          </div>
         </div>
       </div>
     </footer>
