@@ -1,8 +1,14 @@
 import Link from 'next/link';
 import ProductList from '@/components/ProductList'; 
 
-// ✅ Build error (DYNAMIC_SERVER_USAGE) fix karne ke liye
+/**
+ * ✅ NEXT.JS BUILD FIX: 
+ * Yeh teeno lines Next.js ko batati hain ke is page ko build ke waqt static nahi banana, 
+ * balkay har request par naya data fetch karna hai.
+ */
 export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
 
 type Product = {
   id: string;
@@ -24,54 +30,56 @@ type Product = {
   isExclusive?: boolean;
 };
 
-// API URL check (Vercel ya Localhost)
+// ✅ URL FIX: Localhost ko priority nahi di, direct Vercel URL rakhi hai fallback mein
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://supplimax-back-xypo.vercel.app';
 
-// Data Fetching Function
 async function getProducts(): Promise<Product[]> {
   try {
-    const fetchUrl = `${API_BASE_URL}/products`;
-    console.log('Fetching products from:', fetchUrl);
+    // URL format ko clean karne ke liye logic
+    const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
+    const fetchUrl = `${baseUrl}/products`;
+    
+    console.log(' [SYSTEM] Fetching data from:', fetchUrl);
 
     const res = await fetch(fetchUrl, { 
-      cache: 'no-store', // Taake har dafa naya data mile
+      cache: 'no-store',
+      next: { revalidate: 0 } // Next.js 14/15 specific fix
     });
 
     if (!res.ok) {
-      console.error(`Error: ${res.status} ${res.statusText}`);
-      return []; 
+      console.error(` [SYSTEM] API Error: ${res.status}`);
+      return [];
     }
 
     const products = await res.json();
     
-    // Proper mapping for MongoDB IDs
+    // Proper MongoDB ID mapping logic
     return products.map((product: any, index: number) => ({
       id: product.id || product._id?.toString() || `temp-${index + 1}`,
       name: product.name || '',
-      price: product.price || 0,
-      cost: product.cost || 0,
+      price: Number(product.price) || 0,
+      cost: Number(product.cost) || 0,
       description: product.description || '',
       imageUrl: product.imageUrl || '',
-      quantityInStock: product.quantityInStock || 0,
+      quantityInStock: Number(product.quantityInStock) || 0,
       size: product.size || 'One Size',
-      rating: product.rating || 0,
+      rating: Number(product.rating) || 0,
       color: product.color || '',
-      onSale: product.onSale || false,
-      discountPercentage: product.discountPercentage || 0,
-      isNewArrival: product.isNewArrival || false,
+      onSale: Boolean(product.onSale),
+      discountPercentage: Number(product.discountPercentage) || 0,
+      isNewArrival: Boolean(product.isNewArrival),
       category: product.category || 'Uncategorized',
       isInStock: product.isInStock !== undefined ? product.isInStock : (product.quantityInStock > 0),
-      isFeatured: product.isFeatured || false,
-      isExclusive: product.isExclusive || false,
+      isFeatured: Boolean(product.isFeatured),
+      isExclusive: Boolean(product.isExclusive),
     }));
 
   } catch (error) {
-    console.error('Fetch error:', error);
+    console.error(' [SYSTEM] Critical Fetch Error:', error);
     return []; 
   }
 }
 
-// Page Component
 export default async function ProductsPage() {
   const products = await getProducts();
 
@@ -81,7 +89,6 @@ export default async function ProductsPage() {
         <h1 className="text-4xl font-extrabold !text-[#2D3B29]">
             Our Products
         </h1>
-        {/* Admin Link (Sirf agar aap admin hain) */}
         <Link 
           href="/products/add" 
           className="bg-[#629D23] hover:bg-[#2D3B29] text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300"
@@ -90,10 +97,9 @@ export default async function ProductsPage() {
         </Link>
       </div>
 
-      {/* Info Message for User */}
       {products.length === 0 ? (
-        <div className="text-center py-20">
-          <p className="text-gray-500 text-lg">No products found. Please check your database connection.</p>
+        <div className="text-center py-20 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+          <p className="text-gray-500 text-lg">No products found in the database.</p>
         </div>
       ) : (
         <ProductList products={products} />
