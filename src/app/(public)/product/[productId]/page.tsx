@@ -1,7 +1,7 @@
 // app/products/[productId]/page.tsx
 import ProductDetailClient from './ProductDetailClient';
 
-//  Complete Product Interface
+// Complete Product Interface
 interface Product {
   id: string;
   name: string;
@@ -22,50 +22,34 @@ interface Product {
   isExclusive?: boolean;
 }
 
+// ✅ Environment Variable se URL uthayen, warna local use karein
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
 async function getProduct(productId: string): Promise<Product | null> {
   try {
-    console.log(' [PRODUCT DETAIL] Fetching product with ID:', productId);
-    console.log(' [PRODUCT DETAIL] API URL:', `http://localhost:5000/products/${productId}`);
+    console.log('🔍 [PRODUCT DETAIL] Fetching product with ID:', productId);
     
-    const res = await fetch(`http://localhost:5000/products/${productId}`, {
-      cache: 'no-store',
+    // ✅ URL ko theek tarah se join kiya hy
+    const fullUrl = `${API_BASE_URL}/products/${productId}`;
+    console.log('📡 [PRODUCT DETAIL] API URL:', fullUrl);
+    
+    const res = await fetch(fullUrl, {
+      cache: 'no-store', // Taaky updated data milay
       headers: {
         'Content-Type': 'application/json',
       },
     });
 
-    console.log(' [PRODUCT DETAIL] Response status:', res.status);
-    console.log(' [PRODUCT DETAIL] Response ok:', res.ok);
+    console.log('📊 [PRODUCT DETAIL] Response status:', res.status);
     
     if (!res.ok) {
-      console.error(` [PRODUCT DETAIL] Error fetching product: ${res.status} ${res.statusText}`);
-      
-      //  Detailed error information
-      try {
-        const errorText = await res.text();
-        console.error(' [PRODUCT DETAIL] Error response:', errorText);
-        
-        //  Parse JSON error if possible
-        try {
-          const errorJson = JSON.parse(errorText);
-          console.error(' [PRODUCT DETAIL] Parsed error:', errorJson);
-        } catch (parseError) {
-          console.error(' [PRODUCT DETAIL] Error response is not JSON');
-        }
-      } catch (e) {
-        console.error(' [PRODUCT DETAIL] Could not read error response');
-      }
-      
+      console.error(`❌ [PRODUCT DETAIL] Error fetching product: ${res.status}`);
       return null;
     }
 
     const productData = await res.json();
-    console.log(' [PRODUCT DETAIL] Product data received:', productData);
-    console.log(' [PRODUCT DETAIL] Product ID from API:', productData.id);
-    console.log(' [PRODUCT DETAIL] Product name from API:', productData.name);
-    console.log(' [PRODUCT DETAIL] Product has _id:', !!productData._id);
     
-    //  Data mapping with proper error handling and defaults
+    // ✅ Mapping logic with MongoDB ID support
     const mappedProduct: Product = {
       id: productData.id || productData._id?.toString() || productId,
       name: productData.name || 'Unknown Product',
@@ -86,10 +70,9 @@ async function getProduct(productId: string): Promise<Product | null> {
       isExclusive: Boolean(productData.isExclusive),
     };
 
-    console.log(' [PRODUCT DETAIL] Mapped product:', mappedProduct);
     return mappedProduct;
   } catch (error) {
-    console.error(' [PRODUCT DETAIL] Network error fetching product:', error);
+    console.error('❌ [PRODUCT DETAIL] Network error:', error);
     return null;
   }
 }
@@ -104,89 +87,41 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   let productId: string;
   
   try {
+    // Next.js 15+ mein params ko await karna zaroori hy
     const resolvedParams = await params;
     productId = resolvedParams.productId;
-    console.log(' [PRODUCT DETAIL] Page loaded with productId:', productId);
-    console.log(' [PRODUCT DETAIL] ProductId type:', typeof productId);
   } catch (error) {
-    console.error(' [PRODUCT DETAIL] Error resolving params:', error);
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-md w-full">
-          <div className="text-red-500 text-6xl mb-4"></div>
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Error Loading Page</h1>
-          <p className="text-gray-600 mb-6">
-            There was an error loading the page parameters.
-          </p>
-          <a 
-            href="/product" 
-            className="bg-[#629D23] hover:bg-[#2D3B29] text-white font-semibold py-3 px-6 rounded-lg transition duration-300 inline-block"
-          >
-            ← Back to Products
-          </a>
-        </div>
-      </div>
-    );
+    console.error('❌ [PRODUCT DETAIL] Error resolving params:', error);
+    return renderErrorUI("Error Loading Page Parameters");
   }
   
   if (!productId || productId === 'undefined') {
-    console.error(' [PRODUCT DETAIL] Invalid product ID received:', productId);
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-md w-full">
-          <div className="text-red-500 text-6xl mb-4"></div>
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Invalid Product ID</h1>
-          <p className="text-gray-600 mb-6">
-            Product ID is missing or invalid: "{productId}"
-          </p>
-          <a 
-            href="/product" 
-            className="bg-[#629D23] hover:bg-[#2D3B29] text-white font-semibold py-3 px-6 rounded-lg transition duration-300 inline-block"
-          >
-            ← Back to Products
-          </a>
-        </div>
-      </div>
-    );
+    return renderErrorUI(`Invalid Product ID: ${productId}`);
   }
 
-  console.log(' [PRODUCT DETAIL] Calling getProduct with ID:', productId);
   const product = await getProduct(productId);
 
   if (!product) {
-    console.error(' [PRODUCT DETAIL] Product not found for ID:', productId);
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-md w-full">
-          <div className="text-red-500 text-6xl mb-4"></div>
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Product Not Found</h1>
-          <p className="text-gray-600 mb-4">
-            The product with ID <strong>"{productId}"</strong> doesn't exist or has been deleted.
-          </p>
-          <p className="text-sm text-gray-500 mb-6">
-            Please check the product ID and try again.
-          </p>
-          <div className="space-y-3">
-            <a 
-              href="/product" 
-              className="block bg-[#629D23] hover:bg-[#2D3B29] text-white font-semibold py-3 px-6 rounded-lg transition duration-300"
-            >
-              ← Back to Products
-            </a>
-            <a 
-              href="/" 
-              className="block border border-[#629D23] text-[#629D23] hover:bg-[#629D23] hover:text-white font-semibold py-3 px-6 rounded-lg transition duration-300"
-            >
-              Go to Homepage
-            </a>
-          </div>
-        </div>
-      </div>
-    );
+    return renderErrorUI(`Product with ID "${productId}" Not Found`);
   }
 
-  console.log(' [PRODUCT DETAIL] Product successfully loaded:', product.name);
-  console.log(' [PRODUCT DETAIL] Final product data for form:', product);
-
   return <ProductDetailClient product={product} />;
+}
+
+// Reusable Error UI component to keep the code clean
+function renderErrorUI(message: string) {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-md w-full">
+        <div className="text-red-500 text-6xl mb-4">⚠️</div>
+        <h1 className="text-2xl font-bold text-red-600 mb-4">{message}</h1>
+        <a 
+          href="/product" 
+          className="bg-[#629D23] hover:bg-[#2D3B29] text-white font-semibold py-3 px-6 rounded-lg transition duration-300 inline-block"
+        >
+          ← Back to Products
+        </a>
+      </div>
+    </div>
+  );
 }

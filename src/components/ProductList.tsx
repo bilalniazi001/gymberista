@@ -1,32 +1,26 @@
-// ProductList.tsx - Clean version without debug UI
-
 'use client'; 
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-// ✅ JSON Server Compatible Product Type
+// ✅ Updated Product Type to handle both id and _id
 type Product = {
-  id: string;
+  id?: string;
+  _id?: string;
   name: string;
   price: number;
   cost: number;
   description: string;
   imageUrl: string;
   quantityInStock: number;
-  size: string;
-  rating: number;
-  color: string;
+  category: string;
   onSale: boolean;
   discountPercentage: number;
-  isNewArrival: boolean;
-  category: string;
-  isInStock: boolean;
-  isFeatured?: boolean;
-  isExclusive?: boolean;
+  rating: number;
 };
 
-const API_BASE_URL = 'http://localhost:5000/products'; 
+// ✅ Dynamic Base URL (Vercel ke liye zaroori hy)
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'; 
 
 interface ProductListProps {
   products: Product[];
@@ -35,183 +29,109 @@ interface ProductListProps {
 export default function ProductList({ products }: ProductListProps) {
   const router = useRouter();
 
-  // ✅ Debugging - Products check karein (console mein hi, UI mein nahi)
-  console.log('📦 ProductList - Products received:', products);
-  console.log('🔍 ProductList - First product ID:', products[0]?.id);
+  // ✅ Helper to get the correct ID
+  const getProductId = (p: Product) => p.id || p._id;
 
-  // ✅ Data validation add karein
-  if (!products || !Array.isArray(products)) {
-    return (
-      <div className="overflow-x-auto bg-white rounded-xl shadow-xl p-6 border border-gray-100">
-        <h2 className="text-3xl font-bold text-[#2D3B29] mb-6">Product List</h2>
-        <p className="text-center text-red-500 py-10">Invalid products data received</p>
-      </div>
-    );
-  }
-
-  const handleDelete = async (id: string, name: string) => { 
+  const handleDelete = async (product: Product) => { 
+    const id = getProductId(product);
     if (!id) {
-        alert('Error: Product ID is missing. Cannot delete.');
+        alert('Error: Product ID is missing.');
         return; 
     }
     
-    if (window.confirm(`Are you sure you want to delete "${name}"?`)) {
+    if (window.confirm(`Are you sure you want to delete "${product.name}"?`)) {
       try {
-        const res = await fetch(`${API_BASE_URL}/${id}`, { 
+        const res = await fetch(`${API_BASE_URL}/products/${id}`, { 
           method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          },
         });
 
         if (res.ok) {
-          alert(`Product "${name}" successfully deleted!`);
+          alert('Product deleted successfully!');
           router.refresh(); 
         } else {
-            alert(`Error deleting product: ${res.status}. Please check backend logs.`);
+          alert(`Failed to delete. Status: ${res.status}`);
         }
       } catch (error) {
         console.error('Delete Error:', error);
-        alert('An unexpected error occurred during deletion. See console for details.');
+        alert('Check your internet or backend connection.');
       }
     }
   };
 
-  // ✅ Edit button click handler with enhanced debugging
-  const handleEditClick = (product: Product) => {
-    console.log('🔄 Edit Button Clicked:');
-    console.log('   - Product ID:', product.id);
-    console.log('   - Product Name:', product.name);
-    console.log('   - Edit URL:', `/products/edit/${product.id}`);
-    
-    if (!product.id || product.id === 'undefined') {
-      console.error('❌ ERROR: Product ID is invalid for editing:', product.id);
-      alert('Cannot edit product: Invalid product ID');
-      return false; // Prevent navigation
-    }
-  };
+  if (!products || !Array.isArray(products)) {
+    return <div className="p-6 text-center text-red-500">No valid product data found.</div>;
+  }
 
   return (
     <div className="overflow-x-auto bg-white rounded-xl shadow-xl p-6 border border-gray-100">
-      <h2 className="text-3xl font-bold text-[#2D3B29] mb-6 border-b pb-3">Product List</h2>
-      
-      {/* ✅ Products count show karein - simple version */}
-      <div className="mb-4 text-sm text-gray-600">
-        Total Products: {products.length}
+      <div className="flex justify-between items-center mb-6 border-b pb-4">
+        <h2 className="text-3xl font-bold text-[#2D3B29]">Inventory Management</h2>
+        <span className="bg-gray-100 text-gray-700 px-4 py-1 rounded-full text-sm font-semibold">
+          Total: {products.length} Items
+        </span>
       </div>
 
       {products.length === 0 ? (
         <div className="text-center py-16">
-          <p className="text-gray-500 text-lg mb-4">No products found.</p>
-          <Link 
-            href="/products/add" 
-            className="bg-[#629D23] hover:bg-[#2D3B29] text-white font-semibold py-2 px-6 rounded-lg shadow-md transition duration-300 inline-block"
-          >
-            + Add Your First Product
+          <p className="text-gray-500 mb-4">Your inventory is empty.</p>
+          <Link href="/products/add" className="bg-[#629D23] text-white px-6 py-2 rounded-lg hover:bg-[#4c781d] transition">
+            + Add Product
           </Link>
         </div>
       ) : (
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Product Name</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Category</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Stock</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">On Sale</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Discount</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Rating</th>
-              <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+              <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Product</th>
+              <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase">Price</th>
+              <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase">Stock</th>
+              <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase">Status</th>
+              <th className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {products.map((product) => {
-              // ✅ Check karein ke product ID valid hai
-              const isValidProduct = product.id && product.id !== 'undefined';
+              const pid = getProductId(product);
               
               return (
-                <tr key={product.id} className="hover:bg-gray-50 transition duration-150">
-                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                <tr key={pid} className="hover:bg-gray-50 transition">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      {product.imageUrl && (
-                        <img 
-                          src={product.imageUrl} 
-                          alt={product.name}
-                          className="w-10 h-10 rounded-md object-cover mr-3"
-                        />
-                      )}
-                      <span>{product.name}</span>
-                      {!isValidProduct && (
-                        <span className="ml-2 text-xs text-red-500 bg-red-100 px-2 py-1 rounded">
-                          No ID
-                        </span>
-                      )}
+                      <img src={product.imageUrl || '/placeholder.png'} alt="" className="w-12 h-12 rounded object-cover mr-3 border" />
+                      <div>
+                        <div className="text-sm font-bold text-gray-900">{product.name}</div>
+                        <div className="text-xs text-gray-500">{product.category}</div>
+                      </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-600 font-mono">
+                  <td className="px-4 py-4 text-center text-sm font-mono font-semibold">
                     ${product.price.toFixed(2)}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-600">
-                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                      {product.category}
+                  <td className="px-4 py-4 text-center">
+                    <span className={`px-2 py-1 text-xs rounded-full font-bold ${product.quantityInStock > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                      {product.quantityInStock} in stock
                     </span>
                   </td>
-                  
-                  <td className="px-4 py-3 whitespace-nowrap text-sm font-bold text-center">
-                    <span className={`inline-flex px-3 py-1 text-xs leading-5 rounded-full ${
-                      product.quantityInStock > 50 ? 'bg-green-100 text-green-800' :
-                      product.quantityInStock > 0 ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {product.quantityInStock} {product.quantityInStock === 1 ? 'unit' : 'units'}
-                    </span>
-                  </td>
-
-                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-center">
-                    <span className={`inline-flex px-3 py-1 text-xs leading-5 font-bold rounded-full ${
-                      product.onSale ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {product.onSale ? 'ON SALE' : 'REGULAR'}
-                    </span>
-                  </td>
-                  
-                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-center">
-                    {product.discountPercentage > 0 ? (
-                      <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-bold">
-                        -{product.discountPercentage}%
-                      </span>
+                  <td className="px-4 py-4 text-center">
+                    {product.onSale ? (
+                      <span className="bg-orange-100 text-orange-700 text-[10px] px-2 py-1 rounded-md font-black">SALE {product.discountPercentage}%</span>
                     ) : (
-                      <span className="text-gray-400">—</span>
+                      <span className="text-gray-400 text-xs">Standard</span>
                     )}
                   </td>
-
-                  <td className="px-4 py-3 whitespace-nowrap text-gray-800 text-sm font-medium text-center">
-                    <div className="flex items-center justify-center">
-                      <span className="text-yellow-500 mr-1">★</span>
-                      <span>{product.rating ? product.rating.toFixed(1) : '0.0'}</span>
-                    </div>
-                  </td>
-
-                  <td className="px-6 py-3 whitespace-nowrap text-center text-sm space-x-3">
-                    {isValidProduct ? (
-                      <>
-                        <Link 
-                          href={`/products/edit/${product.id}`}
-                          onClick={() => handleEditClick(product)}
-                          className="text-indigo-600 hover:text-indigo-800 font-semibold transition duration-150 px-4 py-2 border border-indigo-600 rounded hover:bg-indigo-50"
-                        >
-                          Edit
-                        </Link>
-                        <button
-                          onClick={() => handleDelete(product.id, product.name)}
-                          className="text-red-600 hover:text-red-800 font-semibold transition duration-150 px-3 py-2 border border-red-600 rounded hover:bg-red-50"
-                        >
-                          Delete
-                        </button>
-                      </>
-                    ) : (
-                      <span className="text-red-500 text-sm">Invalid ID</span>
-                    )}
+                  <td className="px-6 py-4 text-center space-x-2">
+                    <Link 
+                      href={`/products/edit/${pid}`}
+                      className="inline-block text-indigo-600 hover:bg-indigo-600 hover:text-white border border-indigo-600 px-3 py-1 rounded transition text-sm font-bold"
+                    >
+                      Edit
+                    </Link>
+                    <button
+                      onClick={() => handleDelete(product)}
+                      className="text-red-600 hover:bg-red-600 hover:text-white border border-red-600 px-3 py-1 rounded transition text-sm font-bold"
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               );

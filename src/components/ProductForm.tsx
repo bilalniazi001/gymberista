@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 
-// ✅ UPDATED: NestJS Backend URL
-const API_BASE_URL = 'http://localhost:5000'; 
+// ✅ Dynamic Base URL for Vercel & Local
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'; 
 
 // --- TYPE DEFINITIONS ---
 export interface Product { 
@@ -29,38 +28,28 @@ export interface Product {
 
 export interface ExtendedProduct extends Product {
     id: string; 
+    _id?: string; // MongoDB support
 }
 
 interface ProductFormProps {
-  initialData?: ExtendedProduct;
+    initialData?: ExtendedProduct;
 }
 
 type FormDataType = Omit<Product, 'isInStock'>; 
 
-// ✅ Categories - General categories for your e-commerce
 const CATEGORIES = ['Protein', 'Pre Workout', 'Weight Gainer', 'Creatine', 'BCAA', 'Fat Burner', 'Performance'];
 
-// ----------------------------------------------------
-// --- PRODUCT FORM COMPONENT ---
-// ----------------------------------------------------
 export default function ProductForm({ initialData }: ProductFormProps) {
   const router = useRouter();
   
-  const isEditMode = !!initialData?.id;
+  // ✅ Safe ID handling for MongoDB (_id) or standard id
+  const productId = initialData?.id || initialData?._id;
+  const isEditMode = !!productId;
+  
   const pageTitle = isEditMode ? 'Edit Product' : 'Add New Product';
   const submitButtonText = isEditMode ? 'Update Product' : 'Create Product';
 
-  // ✅ Debugging
-  useEffect(() => {
-    console.log(' ProductForm Debug:');
-    console.log('   - Mode:', isEditMode ? 'EDIT' : 'ADD');
-    console.log('   - Initial Data:', initialData);
-    console.log('   - Product ID:', initialData?.id);
-    console.log('   - Form Data:', formData);
-  }, [isEditMode, initialData]);
-
-  const [formData, setFormData] = useState<FormDataType>(() => {
-    return {
+  const [formData, setFormData] = useState<FormDataType>({
       name: initialData?.name || '',
       price: initialData?.price || 0,
       cost: initialData?.cost || 0,
@@ -76,7 +65,6 @@ export default function ProductForm({ initialData }: ProductFormProps) {
       category: initialData?.category || CATEGORIES[0],
       isFeatured: initialData?.isFeatured || false,
       isExclusive: initialData?.isExclusive || false,
-    };
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -84,18 +72,15 @@ export default function ProductForm({ initialData }: ProductFormProps) {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-    
     let finalValue: any = value;
+
     if (type === 'checkbox') {
         finalValue = (e.target as HTMLInputElement).checked;
     } else if (type === 'number') {
-        finalValue = parseFloat(value) || 0;
+        finalValue = value === '' ? 0 : parseFloat(value);
     }
 
-    setFormData(prev => ({
-        ...prev,
-        [name]: finalValue
-    }));
+    setFormData(prev => ({ ...prev, [name]: finalValue }));
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -109,394 +94,131 @@ export default function ProductForm({ initialData }: ProductFormProps) {
             isInStock: formData.quantityInStock > 0, 
         };
         
-        // ✅ UPDATED: NestJS backend compatible - PUT for edit, POST for create
+        // ✅ API URL Logic
         const method = isEditMode ? 'PUT' : 'POST';
-        const url = isEditMode ? `${API_BASE_URL}/products/${initialData!.id}` : `${API_BASE_URL}/products`;
-
-        console.log('🔄 Submitting form:', {
-          method,
-          url,
-          data: productDataToSend
-        });
+        const url = isEditMode 
+            ? `${API_BASE_URL}/products/${productId}` 
+            : `${API_BASE_URL}/products`;
 
         const response = await fetch(url, {
             method: method,
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(productDataToSend),
         });
 
         if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Server responded with ${response.status}: ${errorText}`);
+            const errorData = await response.json();
+            throw new Error(errorData.message || `Server error: ${response.status}`);
         }
-
-        const result = await response.json();
-        console.log('✅ Form submission successful:', result);
 
         alert(`Product successfully ${isEditMode ? 'updated' : 'created'}!`);
         
-        // ✅ Redirect to admin products list
-        router.push('/products');
+        // ✅ Redirect after success
+        router.push('/products'); 
         router.refresh();
 
     } catch (err: any) {
-        console.error('❌ API Error:', err);
-        setError(err.message || 'An unknown error occurred.');
+        setError(err.message || 'Something went wrong.');
     } finally {
         setIsLoading(false);
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-2xl border border-gray-200">
-      {/* ✅ Page Title with Mode Indicator */}
+    <div className="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-2xl border border-gray-200 my-10">
       <div className="text-center mb-8">
-        <h1 className="text-4xl font-extrabold text-gray-900">
-          {pageTitle}
-        </h1>
-        {isEditMode && (
-          <p className="text-sm text-gray-600 mt-2">
-            Editing Product: <span className="font-semibold">{initialData?.name}</span>
-          </p>
-        )}
+        <h1 className="text-4xl font-extrabold text-gray-900">{pageTitle}</h1>
+        {isEditMode && <p className="text-sm text-gray-600 mt-2 italic">Updating: {initialData?.name}</p>}
       </div>
       
-      {/* ✅ Error Display */}
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
-            <strong className="font-bold">Error:</strong>
-            <span className="block sm:inline ml-2">{error}</span>
-            <button 
-              onClick={() => setError(null)}
-              className="absolute top-0 bottom-0 right-0 px-4 py-3"
-            >
-              <span className="text-red-700">×</span>
-            </button>
+        <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded shadow-sm flex justify-between">
+            <span><strong>Error:</strong> {error}</span>
+            <button onClick={() => setError(null)} className="font-bold">&times;</button>
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        
-        {/* Row 1: Name and Category */}
+        {/* Row 1: Name & Category */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-1">
-              Product Name *
-            </label>
-            <input 
-              id="name" 
-              name="name" 
-              type="text" 
-              value={formData.name} 
-              onChange={handleChange} 
-              required 
-              className="mt-1 block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out placeholder-gray-400 text-gray-800" 
-              placeholder="e.g., Whey Protein"
-            />
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700 mb-1">Product Name *</label>
+            <input name="name" type="text" value={formData.name} onChange={handleChange} required className="p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" />
           </div>
-          
-          <div>
-            <label htmlFor="category" className="block text-sm font-semibold text-gray-700 mb-1">
-              Category *
-            </label>
-            <select 
-              id="category" 
-              name="category" 
-              value={formData.category} 
-              onChange={handleChange} 
-              required 
-              className="mt-1 block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 transition duration-150 ease-in-out text-gray-800"
-            >
-              {CATEGORIES.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700 mb-1">Category *</label>
+            <select name="category" value={formData.category} onChange={handleChange} className="p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none">
+              {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
             </select>
           </div>
         </div>
 
-        {/* Row 2: Price, Cost, and Stock */}
+        {/* Row 2: Price, Cost, Stock */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div>
-            <label htmlFor="price" className="block text-sm font-semibold text-gray-700 mb-1">
-              Selling Price *
-            </label>
-            <input 
-              id="price" 
-              name="price" 
-              type="number" 
-              value={formData.price} 
-              onChange={handleChange} 
-              required 
-              min="0" 
-              step="0.01" 
-              className="mt-1 block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 transition duration-150 ease-in-out placeholder-gray-400 text-gray-800" 
-              placeholder="e.g., 99.99"
-            />
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700 mb-1">Price ($) *</label>
+            <input name="price" type="number" step="0.01" value={formData.price} onChange={handleChange} required className="p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" />
           </div>
-
-          <div>
-            <label htmlFor="cost" className="block text-sm font-semibold text-gray-700 mb-1">
-              Product Cost *
-            </label>
-            <input 
-              id="cost" 
-              name="cost" 
-              type="number" 
-              value={formData.cost} 
-              onChange={handleChange} 
-              required 
-              min="0" 
-              step="0.01" 
-              className="mt-1 block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-orange-500 focus:border-orange-500 transition duration-150 ease-in-out placeholder-gray-400 text-gray-800" 
-              placeholder="e.g., 60.00"
-            />
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700 mb-1">Cost ($) *</label>
+            <input name="cost" type="number" step="0.01" value={formData.cost} onChange={handleChange} required className="p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" />
           </div>
-          
-          <div>
-            <label htmlFor="quantityInStock" className="block text-sm font-semibold text-gray-700 mb-1">
-              Stock Quantity *
-            </label>
-            <input 
-              id="quantityInStock" 
-              name="quantityInStock" 
-              type="number" 
-              value={formData.quantityInStock} 
-              onChange={handleChange} 
-              required 
-              min="0" 
-              className="mt-1 block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-yellow-500 focus:border-yellow-500 transition duration-150 ease-in-out placeholder-gray-400 text-gray-800" 
-              placeholder="e.g., 50"
-            />
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700 mb-1">Stock Qty *</label>
+            <input name="quantityInStock" type="number" value={formData.quantityInStock} onChange={handleChange} required className="p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" />
           </div>
         </div>
 
-        {/* Row 3: Image URL */}
-        <div>
-          <label htmlFor="imageUrl" className="block text-sm font-semibold text-gray-700 mb-1">
-            Image URL
-          </label>
-          <input 
-            id="imageUrl" 
-            name="imageUrl" 
-            type="text" 
-            value={formData.imageUrl} 
-            onChange={handleChange} 
-            className="mt-1 block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-purple-500 focus:border-purple-500 transition duration-150 ease-in-out placeholder-gray-400 text-gray-800" 
-            placeholder="https://example.com/product-image.jpg"
-          />
-          {formData.imageUrl && (
-            <div className="mt-2">
-              <p className="text-xs text-gray-600 mb-1">Image Preview:</p>
-              <img 
-                src={formData.imageUrl} 
-                alt="Preview" 
-                className="h-20 w-20 object-cover rounded border"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
-              />
+        {/* Image Preview Row */}
+        <div className="grid grid-cols-1 gap-4">
+            <label className="text-sm font-semibold text-gray-700">Image URL</label>
+            <div className="flex items-center gap-4">
+                <input name="imageUrl" type="text" value={formData.imageUrl} onChange={handleChange} className="flex-1 p-2.5 border border-gray-300 rounded-lg outline-none" placeholder="Paste image link here..." />
+                {formData.imageUrl && <img src={formData.imageUrl} alt="preview" className="w-12 h-12 object-cover rounded border" />}
             </div>
-          )}
-        </div>
-        
-        {/* Row 4: Description (Full Width) */}
-        <div>
-            <label htmlFor="description" className="block text-sm font-semibold text-gray-700 mb-1">
-              Description *
-            </label>
-            <textarea 
-              id="description" 
-              name="description" 
-              value={formData.description} 
-              onChange={handleChange} 
-              rows={4} 
-              required 
-              className="mt-1 block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out placeholder-gray-400 text-gray-800"
-              placeholder="Detailed description of the product..."
-            />
-          </div>
-
-        {/* Row 5: Attributes (Size, Color, Rating) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div>
-            <label htmlFor="size" className="block text-sm font-semibold text-gray-700 mb-1">
-              Size/Variant
-            </label>
-            <input 
-              id="size" 
-              name="size" 
-              type="text" 
-              value={formData.size} 
-              onChange={handleChange} 
-              className="mt-1 block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-pink-500 focus:border-pink-500 transition duration-150 ease-in-out placeholder-gray-400 text-gray-800" 
-              placeholder="e.g. 5 lbs"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="color" className="block text-sm font-semibold text-gray-700 mb-1">
-              Flavor
-            </label>
-            <input 
-              id="color" 
-              name="color" 
-              type="text" 
-              value={formData.color} 
-              onChange={handleChange} 
-              className="mt-1 block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-gray-500 focus:border-gray-500 transition duration-150 ease-in-out placeholder-gray-400 text-gray-800" 
-              placeholder="e.g Blue Raspberry"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="rating" className="block text-sm font-semibold text-gray-700 mb-1">
-              Rating (0-5)
-            </label>
-            <input 
-              id="rating" 
-              name="rating" 
-              type="number" 
-              value={formData.rating} 
-              onChange={handleChange} 
-              min="0" 
-              max="5" 
-              step="0.1" 
-              className="mt-1 block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-yellow-500 focus:border-yellow-500 transition duration-150 ease-in-out placeholder-gray-400 text-gray-800" 
-              placeholder="e.g., 4.5"
-            />
-          </div>
         </div>
 
-        {/* Row 6: Checkboxes - Sale, New Arrival, Featured, Exclusive */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          
-          <div className="flex items-center space-x-3 p-3 border border-gray-300 rounded-lg shadow-sm bg-white">
-            <input 
-              id="onSale" 
-              name="onSale" 
-              type="checkbox" 
-              checked={formData.onSale} 
-              onChange={handleChange} 
-              className="h-5 w-5 text-red-600 border-gray-300 rounded focus:ring-red-500"
-            />
-            <label htmlFor="onSale" className="text-sm font-semibold text-gray-700 flex items-center">
-              On Sale
-            </label>
-          </div>
-
-          <div className="flex items-center space-x-3 p-3 border border-gray-300 rounded-lg shadow-sm bg-white">
-            <input 
-              id="isNewArrival" 
-              name="isNewArrival" 
-              type="checkbox" 
-              checked={formData.isNewArrival} 
-              onChange={handleChange} 
-              className="h-5 w-5 text-cyan-600 border-gray-300 rounded focus:ring-cyan-500"
-            />
-            <label htmlFor="isNewArrival" className="text-sm font-semibold text-gray-700 flex items-center">
-              New Arrival
-            </label>
-          </div>
-
-          <div className="flex items-center space-x-3 p-3 border border-gray-300 rounded-lg shadow-sm bg-white">
-            <input 
-              id="isFeatured" 
-              name="isFeatured" 
-              type="checkbox" 
-              checked={formData.isFeatured} 
-              onChange={handleChange} 
-              className="h-5 w-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
-            />
-            <label htmlFor="isFeatured" className="text-sm font-semibold text-gray-700 flex items-center">
-              Featured
-            </label>
-          </div>
-
-          <div className="flex items-center space-x-3 p-3 border border-gray-300 rounded-lg shadow-sm bg-white">
-            <input 
-              id="isExclusive" 
-              name="isExclusive" 
-              type="checkbox" 
-              checked={formData.isExclusive} 
-              onChange={handleChange} 
-              className="h-5 w-5 text-pink-600 border-gray-300 rounded focus:ring-pink-500"
-            />
-            <label htmlFor="isExclusive" className="text-sm font-semibold text-gray-700 flex items-center">
-              Exclusive
-            </label>
-          </div>
+        {/* Description */}
+        <div className="flex flex-col">
+          <label className="text-sm font-semibold text-gray-700 mb-1">Description *</label>
+          <textarea name="description" rows={3} value={formData.description} onChange={handleChange} required className="p-2.5 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-green-500" />
         </div>
 
-        {/* Row 7: Discount Percentage (Conditional) */}
-        {formData.onSale && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label htmlFor="discountPercentage" className="block text-sm font-semibold text-gray-700 mb-1">
-                Discount Percentage *
-              </label>
+        {/* Checkboxes Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-lg">
+          {['onSale', 'isNewArrival', 'isFeatured', 'isExclusive'].map((field) => (
+            <label key={field} className="flex items-center gap-2 cursor-pointer">
               <input 
-                id="discountPercentage" 
-                name="discountPercentage" 
-                type="number" 
-                value={formData.discountPercentage} 
-                onChange={handleChange} 
-                min="0" 
-                max="100" 
-                required
-                className="mt-1 block w-full px-4 py-2.5 border border-red-300 rounded-lg shadow-sm focus:ring-red-500 focus:border-red-500 transition duration-150 ease-in-out placeholder-gray-400 text-gray-800" 
-                placeholder="e.g., 15"
+                type="checkbox" 
+                name={field} 
+                checked={(formData as any)[field]} 
+                onChange={handleChange}
+                className="w-4 h-4 accent-green-600"
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Enter discount percentage (0-100)
-              </p>
+              <span className="text-xs font-bold text-gray-600 uppercase">{field.replace('is', '')}</span>
+            </label>
+          ))}
+        </div>
+
+        {/* Discount Preview (Conditional) */}
+        {formData.onSale && (
+          <div className="p-4 bg-green-50 border border-green-200 rounded-lg flex justify-between items-center">
+            <div>
+                <label className="text-xs font-bold text-green-800">DISCOUNT %</label>
+                <input name="discountPercentage" type="number" value={formData.discountPercentage} onChange={handleChange} className="block w-20 p-1 mt-1 border rounded" />
             </div>
-            
-            {/* Discount Calculation Preview */}
-            <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-              <h4 className="font-semibold text-red-800 mb-2">Discount Preview</h4>
-              <p className="text-sm text-gray-700">
-                Original Price: <span className="line-through">${formData.price.toFixed(2)}</span>
-              </p>
-              <p className="text-sm text-gray-700">
-                Discount: <span className="text-red-600 font-bold">-{formData.discountPercentage}%</span>
-              </p>
-              <p className="text-lg font-bold text-green-700 mt-1">
-                Final Price: ${(formData.price * (1 - formData.discountPercentage / 100)).toFixed(2)}
-              </p>
+            <div className="text-right">
+                <p className="text-xs text-gray-500 line-through">${formData.price.toFixed(2)}</p>
+                <p className="text-lg font-bold text-green-700">${(formData.price * (1 - formData.discountPercentage / 100)).toFixed(2)}</p>
             </div>
           </div>
         )}
 
-        {/* Submit and Cancel Buttons */}
-        <div className="pt-4 flex space-x-4">
-          <button
-            type="button"
-            onClick={() => router.push('/products')}
-            className="flex-1 bg-[#2D3B29] text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-gray-500 focus:ring-opacity-50"
-          >
-            Cancel
-          </button>
-          
-          <button
-            type="submit"
-            disabled={isLoading}
-            className={`flex-1 bg-gradient-to-r from-[#629D23] to-[#4c781d] text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-0.5 hover:scale-100 ${
-              isLoading ? 'opacity-60 cursor-not-allowed' : ''
-            } focus:outline-none focus:ring-4 focus:ring-green-500 focus:ring-opacity-50`}
-          >
-            {isLoading ? (
-              <span className="flex items-center justify-center">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                {isEditMode ? 'Updating...' : 'Creating...'}
-              </span>
-            ) : (
-              submitButtonText
-            )}
+        {/* Action Buttons */}
+        <div className="flex gap-4 pt-4">
+          <button type="button" onClick={() => router.back()} className="flex-1 py-3 bg-gray-200 text-gray-800 font-bold rounded-lg hover:bg-gray-300 transition">Cancel</button>
+          <button type="submit" disabled={isLoading} className="flex-[2] py-3 bg-[#629D23] text-white font-bold rounded-lg hover:bg-[#4c781d] transition disabled:opacity-50">
+            {isLoading ? 'Processing...' : submitButtonText}
           </button>
         </div>
       </form>

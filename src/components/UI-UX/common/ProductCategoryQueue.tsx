@@ -10,11 +10,14 @@ interface CategoryItem {
   href: string;
 }
 
+// ✅ Dynamic Base URL Setup
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
 export default function ProductCategoryQueue() {
   const [categoriesData, setCategoriesData] = useState<CategoryItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  //  Categories ke liye background images
+  // Categories ke liye background images (Wahi rahay gi jo aapki hain)
   const categoryImages = {
     'Protein': 'https://springs.com.pk/cdn/shop/files/705016500406.gif?v=1747852022',
     'Pre Workout': 'https://cloudinary.images-iherb.com/image/upload/f_auto,q_auto:eco/images/bsn/bsn00160/l/43.jpg',
@@ -28,11 +31,14 @@ export default function ProductCategoryQueue() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch('http://localhost:5000/products');
+        setLoading(true);
+        // ✅ Hardcoded URL ki jagah dynamic API_BASE_URL use kiya
+        const response = await fetch(`${API_BASE_URL}/products`);
+        
         if (!response.ok) throw new Error('Failed to fetch products');
         const products = await response.json();
 
-        //  Dynamic categories generate karein products se
+        // Dynamic categories generate karein products se
         const categoryCounts = products.reduce((acc: any, product: any) => {
           const category = product.category;
           if (category) {
@@ -41,18 +47,18 @@ export default function ProductCategoryQueue() {
           return acc;
         }, {});
 
-        //  Categories array banayein
+        // Categories array banayein
         const categories = Object.keys(categoryCounts).map(category => ({
-  id: category,
-  name: category,
-  productCount: categoryCounts[category],
-  imageSrc: categoryImages[category as keyof typeof categoryImages] || 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&auto=format&fit=crop&q=80',
-  href: `/shop/${category}`
-}));
+          id: category,
+          name: category,
+          productCount: categoryCounts[category],
+          imageSrc: categoryImages[category as keyof typeof categoryImages] || 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&auto=format&fit=crop&q=80',
+          href: `/shop/${category}`
+        }));
 
         setCategoriesData(categories);
       } catch (error) {
-        console.error('Error fetching categories:', error);
+        console.error('❌ Error fetching categories:', error);
         setCategoriesData([]);
       } finally {
         setLoading(false);
@@ -64,11 +70,8 @@ export default function ProductCategoryQueue() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-12 md:py-16">
-        <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center md:text-left">
-          Shop by Category
-        </h2>
-        <div className="text-center py-10">Loading categories...</div>
+      <div className="container mx-auto px-4 py-12 md:py-16 text-center">
+        <div className="animate-pulse text-xl font-semibold text-gray-500">Loading categories...</div>
       </div>
     );
   }
@@ -87,7 +90,7 @@ export default function ProductCategoryQueue() {
             <Link 
               key={category.id} 
               href={category.href}
-              className="flex-shrink-0 w-64 h-64 relative bg-gray-100 p-6 flex flex-col justify-end rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 ease-in-out hover:scale-105 transform"
+              className="flex-shrink-0 w-64 h-64 relative bg-gray-100 p-6 flex flex-col justify-end rounded-lg shadow-md hover:shadow-lg transition-all duration-300 ease-in-out hover:scale-105 transform group"
             >
               {/* ✅ Background Image */}
               <img
@@ -96,12 +99,12 @@ export default function ProductCategoryQueue() {
                 className="absolute inset-0 w-full h-full object-cover rounded-lg"
               />
 
-              {/* Dark Overlay for Better Text Readability */}
-              <div className="absolute inset-0 hover:bg-black hover:opacity-70 rounded-lg"></div>
+              {/* ✅ Dark Overlay (Always slightly visible, darker on hover) */}
+              <div className="absolute inset-0 bg-black bg-opacity-30 group-hover:bg-opacity-60 transition-opacity rounded-lg"></div>
 
               {/* Text Content */}
               <div className="relative z-10 text-white">
-                <h3 className="text-xl font-bold mb-1 drop-shadow-md">
+                <h3 className="text-xl font-bold mb-1 drop-shadow-lg">
                   {category.name}
                 </h3>
                 <p className="text-sm font-semibold text-gray-200">

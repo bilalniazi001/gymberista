@@ -24,7 +24,7 @@ type Product = {
   isExclusive?: boolean;
 };
 
-const API_BASE_URL = 'http://localhost:5000/products'; 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 // Data Fetching Function (Next.js Server Component)
 async function getProducts(): Promise<Product[]> {
