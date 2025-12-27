@@ -20,7 +20,8 @@ type Product = {
 };
 
 // ✅ Dynamic Base URL (Vercel ke liye zaroori hy)
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'; 
+const API_BASE_URL = 'https://supplimax-back-xypo.vercel.app';
+//const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'; 
 
 interface ProductListProps {
   products: Product[];

@@ -22,7 +22,8 @@ interface Filters {
 }
 
 const fetchProducts = async (): Promise<Product[]> => {
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  const API_BASE_URL = 'https://supplimax-back-xypo.vercel.app';
+  //const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
   
   try {
     const response = await fetch(API_BASE_URL);

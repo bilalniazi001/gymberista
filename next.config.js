@@ -1,7 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Yahan koi experimental settings nahi hain
-  // Basic configuration rakhein agar zaroorat ho
+  env: {
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+  },
 }
 
 module.exports = nextConfig

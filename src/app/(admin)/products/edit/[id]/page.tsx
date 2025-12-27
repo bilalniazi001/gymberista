@@ -24,7 +24,8 @@ type Product = {
   isExclusive?: boolean;
 };
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_BASE_URL = 'https://supplimax-back-xypo.vercel.app';
+//const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 async function getProduct(id: string): Promise<Product | null> {
   try {

@@ -23,7 +23,8 @@ interface Product {
 }
 
 // ✅ Environment Variable se URL uthayen, warna local use karein
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_BASE_URL = 'https://supplimax-back-xypo.vercel.app';
+//const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 async function getProduct(productId: string): Promise<Product | null> {
   try {

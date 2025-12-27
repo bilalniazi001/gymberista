@@ -31,7 +31,8 @@ type Product = {
 };
 
 // ✅ URL FIX: Localhost ko priority nahi di, direct Vercel URL rakhi hai fallback mein
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://supplimax-back-xypo.vercel.app';
+const API_BASE_URL = 'https://supplimax-back-xypo.vercel.app';
+//const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://supplimax-back-xypo.vercel.app';
 
 async function getProducts(): Promise<Product[]> {
   try {
