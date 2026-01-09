@@ -15,7 +15,7 @@ export default function Home() {
     console.log('Backend URL:', process.env.NEXT_PUBLIC_API_URL);
     
     // Test call
-    fetch('https://supplimax-back-xypo.vercel.app/products')
+    fetch('https://supplimax-back-production.up.railway.app/products')
       .then(res => {
         console.log('Fetch Status:', res.status);
         console.log('CORS Header:', res.headers.get('access-control-allow-origin'));
