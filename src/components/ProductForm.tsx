@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 // ✅ Dynamic Base URL for Vercel & Local
-const API_BASE_URL = 'https://supplimax-back-xypo.vercel.app';
+const API_BASE_URL = 'https://supplimax-back-production.up.railway.app';
 //const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'; 
 
 // --- TYPE DEFINITIONS ---

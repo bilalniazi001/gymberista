@@ -19,7 +19,7 @@ interface ProductItem {
 }
 
 // ✅ Client-side environment variable support
-const API_BASE_URL = 'https://supplimax-back-xypo.vercel.app';
+const API_BASE_URL = 'https://supplimax-back-production.up.railway.app';
 //const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 // Featured products fetch karne ka mukammal URL
 const FETCH_URL = `${API_BASE_URL}/products?isFeatured=true`;
