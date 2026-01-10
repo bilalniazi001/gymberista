@@ -28,8 +28,8 @@ interface DropdownMenuProps {
 const topLinks: TopLink[] = [
   { name: 'About Us', href: '/about' },
   { name: 'Contact', href: '/contacts' },
-  { name: 'Orders', href: '/orders' },
-  { name: 'FAQ', href: '/faq' },
+  { name: 'Orders', href: '/' },
+  { name: 'FAQ', href: '/' },
 ];
 
 // Static categories for header - these will match with ProductCategoryQueue
@@ -55,15 +55,15 @@ const mainNavLinks: MainNavLink[] = [
       { name: 'Creatine', href: '/shop/Creatine' }
     ] 
   },
-  { name: 'Offers', href: '/offers' },
-  { name: 'Blog', href: '/blog' },
+  { name: 'Offers', href: '/' },
+  { name: 'Blog', href: '/' },
   { 
     name: 'Pages', 
     href: '#', 
     dropdown: [
-      { name: 'Wishlist', href: '/wishlist' },
-      { name: 'Cart', href: '/cart' },
-      { name: 'Checkout', href: '/checkout' },
+      { name: 'Wishlist', href: '/' },
+      { name: 'Cart', href: '/' },
+      { name: 'Checkout', href: '/' },
       { name: 'Account', href: '/account' }
     ] 
   },
@@ -101,7 +101,7 @@ export default function SuppliMaxNavbar() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch('http://localhost:5000/products');
+        const response = await fetch('http://supplimax-back-production.up.railway.app');
         if (!response.ok) throw new Error('Failed to fetch products');
         const products = await response.json();
 
@@ -229,12 +229,12 @@ export default function SuppliMaxNavbar() {
               </div>
             </div>
             <div className="flex items-center space-x-6">
-              <Link href="/wishlist" className="flex flex-col items-center justify-center text-gray-600 hover:text-[#629D23] transition-colors group">
+              <Link href="/" className="flex flex-col items-center justify-center text-gray-600 hover:text-[#629D23] transition-colors group">
                 <Heart className="w-6 h-6 transform group-hover:scale-110 transition-transform" />
                 <span className="text-xs font-medium mt-1">Wishlist</span>
               </Link>
               
-              <Link href="/cart" className="flex flex-col items-center justify-center text-gray-600 hover:text-[#629D23] transition-colors group relative">
+              <Link href="/" className="flex flex-col items-center justify-center text-gray-600 hover:text-[#629D23] transition-colors group relative">
                 <ShoppingCart className="w-6 h-6 transform group-hover:scale-110 transition-transform" />
                 <span className="text-xs font-medium mt-1">Cart</span>
               </Link>
@@ -256,7 +256,7 @@ export default function SuppliMaxNavbar() {
                     <Link href="/account" className="block px-4 py-2 text-sm text-gray-700 hover:bg-[#629D23] hover:text-white transition-colors">
                       My Account
                     </Link>
-                    <Link href="/cart" className="block px-4 py-2 text-sm text-gray-700 hover:bg-[#629D23] hover:text-white transition-colors">
+                    <Link href="/" className="block px-4 py-2 text-sm text-gray-700 hover:bg-[#629D23] hover:text-white transition-colors">
                       My Cart 
                     </Link>
                     <button 
@@ -312,7 +312,7 @@ export default function SuppliMaxNavbar() {
           </div>
 
           <div className="flex items-center">
-            <Link href="/sale" className="px-4 py-2 bg-[#2D3B29] text-white font-bold text-sm rounded-full shadow-lg hover:bg-[#629D23] transition-colors">
+            <Link href="/" className="px-4 py-2 bg-[#2D3B29] text-white font-bold text-sm rounded-full shadow-lg hover:bg-[#629D23] transition-colors">
               Exclusive Sale Offer!
             </Link>
           </div>
@@ -324,15 +324,15 @@ export default function SuppliMaxNavbar() {
             <h1 className="text-xl font-extrabold text-[#629D23]">SuppliMax</h1>
           </Link>
           <div className="flex space-x-3">
-            <Link href="/search">
+            <Link href="/">
               <Search className="w-6 h-6 text-gray-600"/>
             </Link>
             
-            <Link href="/wishlist">
+            <Link href="/">
               <Heart className="w-6 h-6 text-gray-600"/>
             </Link>
             
-            <Link href="/cart" className="relative">
+            <Link href="/" className="relative">
               <ShoppingCart className="w-6 h-6 text-gray-600"/>
             </Link>
             

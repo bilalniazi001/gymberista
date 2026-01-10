@@ -214,18 +214,16 @@ export default function AdminDashboardPage() {
           >
             Manage Products
           </Link>
-          <Link 
-            href="/orders" 
+          <span 
             className="bg-indigo-600 text-white p-4 rounded-lg hover:bg-indigo-700 transition duration-300 text-center font-semibold"
           >
             View Orders
-          </Link>
-          <Link 
-            href="/users" 
+          </span>
+          <span 
             className="bg-teal-600 text-white p-4 rounded-lg hover:bg-teal-700 transition duration-300 text-center font-semibold"
           >
             Manage Users
-          </Link>
+          </span>
         </div>
       </div>
     </div>
