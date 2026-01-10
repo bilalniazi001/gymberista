@@ -229,15 +229,15 @@ export default function SuppliMaxNavbar() {
               </div>
             </div>
             <div className="flex items-center space-x-6">
-              <Link href="/" className="flex flex-col items-center justify-center text-gray-600 hover:text-[#629D23] transition-colors group">
+              <span className="flex flex-col items-center justify-center text-gray-600 hover:text-[#629D23] transition-colors group">
                 <Heart className="w-6 h-6 transform group-hover:scale-110 transition-transform" />
                 <span className="text-xs font-medium mt-1">Wishlist</span>
-              </Link>
+              </span>
               
-              <Link href="/" className="flex flex-col items-center justify-center text-gray-600 hover:text-[#629D23] transition-colors group relative">
+              <span className="flex flex-col items-center justify-center text-gray-600 hover:text-[#629D23] transition-colors group relative">
                 <ShoppingCart className="w-6 h-6 transform group-hover:scale-110 transition-transform" />
                 <span className="text-xs font-medium mt-1">Cart</span>
-              </Link>
+              </span>
               
               {isAuthenticated ? (
                 <div className="relative group">
@@ -256,9 +256,9 @@ export default function SuppliMaxNavbar() {
                     <Link href="/account" className="block px-4 py-2 text-sm text-gray-700 hover:bg-[#629D23] hover:text-white transition-colors">
                       My Account
                     </Link>
-                    <Link href="/" className="block px-4 py-2 text-sm text-gray-700 hover:bg-[#629D23] hover:text-white transition-colors">
+                    <span className="block px-4 py-2 text-sm text-gray-700 hover:bg-[#629D23] hover:text-white transition-colors">
                       My Cart 
-                    </Link>
+                    </span>
                     <button 
                       onClick={handleLogout}
                       className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
@@ -312,9 +312,9 @@ export default function SuppliMaxNavbar() {
           </div>
 
           <div className="flex items-center">
-            <Link href="/" className="px-4 py-2 bg-[#2D3B29] text-white font-bold text-sm rounded-full shadow-lg hover:bg-[#629D23] transition-colors">
+            <span className="px-4 py-2 bg-[#2D3B29] text-white font-bold text-sm rounded-full shadow-lg hover:bg-[#629D23] transition-colors">
               Exclusive Sale Offer!
-            </Link>
+            </span>
           </div>
         </div>
       </nav>
@@ -324,17 +324,12 @@ export default function SuppliMaxNavbar() {
             <h1 className="text-xl font-extrabold text-[#629D23]">SuppliMax</h1>
           </Link>
           <div className="flex space-x-3">
-            <Link href="/">
               <Search className="w-6 h-6 text-gray-600"/>
-            </Link>
             
-            <Link href="/">
               <Heart className="w-6 h-6 text-gray-600"/>
-            </Link>
             
-            <Link href="/" className="relative">
+            
               <ShoppingCart className="w-6 h-6 text-gray-600"/>
-            </Link>
             
             {isAuthenticated ? (
               <Link href="/account">
