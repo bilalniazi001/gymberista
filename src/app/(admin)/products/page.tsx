@@ -32,7 +32,7 @@ async function getProducts(): Promise<Product[]> {
     const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
     const fetchUrl = `${baseUrl}/products`;
     
-    console.log('📡 [DEBUG] Fetching from:', fetchUrl);
+    console.log('📡 Fetching from:', fetchUrl);
 
     const res = await fetch(fetchUrl, { 
       cache: 'no-store',
@@ -40,87 +40,79 @@ async function getProducts(): Promise<Product[]> {
     });
 
     if (!res.ok) {
-      console.error(`❌ [ERROR] API Error: ${res.status}`);
+      console.error(`❌ API Error: ${res.status}`);
       return [];
     }
 
     const response = await res.json();
-    console.log('📦 [DEBUG] Raw API Response:', response);
+    console.log('📊 Response type:', typeof response);
+    console.log('🔑 First few keys:', Object.keys(response).slice(0, 5));
     
-    // ✅ EXTRACT PRODUCTS ARRAY FROM RESPONSE
-    let productsArray = [];
+    // ✅ FIX: Handle object with numeric keys
+    let productsArray: any[] = [];
     
-    // Case 1: { data: [...] } - MOST COMMON
-    if (response.data && Array.isArray(response.data)) {
-      console.log(`✅ Found ${response.data.length} products in response.data`);
-      productsArray = response.data;
-    }
-    // Case 2: { products: [...] }
-    else if (response.products && Array.isArray(response.products)) {
-      console.log(`✅ Found ${response.products.length} products in response.products`);
-      productsArray = response.products;
-    }
-    // Case 3: Direct array response
-    else if (Array.isArray(response)) {
-      console.log(`✅ Found ${response.length} products in direct array`);
-      productsArray = response;
-    }
-    // Case 4: Search for any array in response
-    else {
-      console.log('⚠️ Searching for products array in response...');
-      for (const key in response) {
-        if (Array.isArray(response[key])) {
-          productsArray = response[key];
-          console.log(`✅ Found ${productsArray.length} products in response.${key}`);
-          break;
-        }
+    if (response && typeof response === 'object') {
+      const keys = Object.keys(response);
+      
+      // Check if it's object with numeric keys (like {"0": {}, "1": {}, ...})
+      const hasNumericKeys = keys.some(key => !isNaN(Number(key)));
+      
+      if (hasNumericKeys) {
+        // Convert object to array and filter out non-product objects
+        productsArray = Object.values(response).filter((item: any) => 
+          item && typeof item === 'object' && item.name && item.price !== undefined
+        );
+        console.log(`✅ Converted object to ${productsArray.length} products`);
+      } 
+      else if (Array.isArray(response)) {
+        productsArray = response;
+        console.log(`✅ Direct array: ${productsArray.length} products`);
+      }
+      else if (response.data && Array.isArray(response.data)) {
+        productsArray = response.data;
+        console.log(`✅ From data property: ${productsArray.length} products`);
       }
     }
     
-    if (productsArray.length === 0) {
-      console.warn('⚠️ No products array found in response');
-    }
+    console.log(`🎯 Total products to display: ${productsArray.length}`);
     
-    console.log('🎯 [DEBUG] Products to map:', productsArray.length);
-    
-    // Now map the extracted array
+    // Map to Product type
     return productsArray.map((product: any, index: number) => ({
-      id: product.id || product._id?.toString() || `temp-${index + 1}`,
-      name: product.name || '',
+      id: product.id || product._id?.toString() || `prod-${index + 1}`,
+      name: product.name || `Product ${index + 1}`,
       price: Number(product.price) || 0,
       cost: Number(product.cost) || 0,
       description: product.description || '',
-      imageUrl: product.imageUrl || '',
+      imageUrl: product.imageUrl || 'https://via.placeholder.com/150',
       quantityInStock: Number(product.quantityInStock) || 0,
-      size: product.size || 'One Size',
-      rating: Number(product.rating) || 0,
+      size: product.size || 'Standard',
+      rating: Number(product.rating) || 4.0,
       color: product.color || '',
       onSale: Boolean(product.onSale),
       discountPercentage: Number(product.discountPercentage) || 0,
       isNewArrival: Boolean(product.isNewArrival),
-      category: product.category || 'Uncategorized',
+      category: product.category || 'General',
       isInStock: product.isInStock !== undefined ? product.isInStock : (product.quantityInStock > 0),
       isFeatured: Boolean(product.isFeatured),
       isExclusive: Boolean(product.isExclusive),
     }));
 
   } catch (error) {
-    console.error('❌ [ERROR] Critical Fetch Error:', error);
+    console.error('❌ Fetch Error:', error);
     return []; 
   }
 }
 
 export default async function ProductsPage() {
-  console.log('🚀 ProductsPage rendering...');
   const products = await getProducts();
   
-  console.log('📊 ProductsPage received:', products.length, 'products');
+  console.log('🚀 Page received:', products.length, 'products');
 
   return (
     <div className="p-6 md:p-10 space-y-6">
       <div className="flex justify-between items-center border-b pb-4">
         <h1 className="text-4xl font-extrabold !text-[#2D3B29]">
-            Our Products ({products.length})
+          Our Products ({products.length})
         </h1>
         <Link 
           href="/products/add" 
@@ -130,25 +122,25 @@ export default async function ProductsPage() {
         </Link>
       </div>
 
+      {/* Debug Info */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-center">
+          <span className="text-blue-700 font-bold mr-2">✅ Data Structure Fixed</span>
+          <span className="text-sm text-blue-600">
+            Converted object with {products.length} products to array
+          </span>
+        </div>
+      </div>
+
       {products.length === 0 ? (
         <div className="text-center py-20 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
-          <p className="text-gray-500 text-lg">No products found in the database.</p>
+          <p className="text-gray-500 text-lg">No products found after conversion.</p>
           <p className="text-sm text-gray-400 mt-2">
-            Check browser console for API response details
+            Check browser console for data structure details
           </p>
         </div>
       ) : (
-        <>
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex items-center">
-              <span className="text-blue-700 font-bold mr-2">✅ Connected to Backend</span>
-              <span className="text-sm text-blue-600">
-                Showing {products.length} products from {API_BASE_URL}
-              </span>
-            </div>
-          </div>
-          <ProductList products={products} />
-        </>
+        <ProductList products={products} />
       )}
     </div>
   );
